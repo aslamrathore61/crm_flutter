@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Page</title>
+</head>
+<body>
+<button id="loginBtn">Login</button>
+
+<script>
+    const handleLoginBtnClick = () => {
+        const handleApiRes = (res) => {
+            const { result = {}, resultmsg, code } = res
+            const { msgdescription } = resultmsg.at(0)
+
+            if (code === 200) {
+                setUserToken(result)
+
+                showToastSucces({
+                    message: msgdescription,
+                    options: {
+                        autoClose: 2000,
+                    },
+                })
+
+                updateTheSearchParams({
+                    pathname,
+                    searchParams,
+                    router,
+                    searchKey: searchParamsKeys['active-leads-module-tab'],
+                    value: 'all-leads',
+                    newPathName: '/leads',
+                })
+
+                dispatch(hideMobileNav())
+            } else {
+                showToastError({
+                    message: msgdescription,
+                    options: {
+                        autoClose: 2000,
+                    },
+                })
+            }
+
+            window.setToken = null
+        }
+
+        window.setToken = (token) => {
+            console.log('token ->', token)
+
+            const obj = {
+                userName: loginData.email,
+                password: loginData.password,
+            }
+
+            if (token) {
+                obj.fcmToken = token
+            }
+
+            dispatch(
+                getAgentLogin({
+                    body: obj,
+                    successCB: handleApiRes,
+                })
+            )
+        }
+
+        try {
+            if (window.NativeJavascriptInterface) {
+                window.NativeJavascriptInterface.generateToken()
+            } else if (
+                window.webkit &&
+                window.webkit.messageHandlers.NativeJavascriptInterface
+            ) {
+                // Call iOS interface
+                window.webkit.messageHandlers.NativeJavascriptInterface.postMessage(
+                    'callPostMessage'
+                )
+            } else {
+
+            window.CHANNEL_NAME.postMessage('Hello from JS');
+
+                // No Android or iOS interface found
+                console.log('No native APIs found.')
+                window.setToken(null)
+            }
+        } catch (err) {
+            console.log(err)
+            window.alert(err)
+        }
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', handleLoginBtnClick)
+</script>
+</body>
+</html>

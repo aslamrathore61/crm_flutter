@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "393281013850",
+    "project_id": "save-max-crm",
+    "storage_bucket": "save-max-crm.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:393281013850:android:0feb3f4b493e5d958ef063",
+        "android_client_info": {
+          "package_name": "com.savemax.crm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9BIyVCprwMT44Je0Cm-uXBpiR2VOaz0E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
