@@ -265,7 +265,7 @@ void javaScriptCall(WebViewController webViewController, BuildContext context) {
   webViewController.addJavaScriptChannel(
       'FlutterChannel',
       onMessageReceived: (message) async {
-    //    print('LoginFCMToken: ${message.message}');
+       print('LoginFCMToken: ${message.message}');
         if(message.message == "GenerateFCMToken") {
           SharedPreferences prefs = await SharedPreferences.getInstance();
           String? fcmToken = prefs.getString('fcmToken');

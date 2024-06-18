@@ -74,75 +74,33 @@ Page resource error:
 }
 
 
-// String html = """
-//       <html>
-// <head>
-//   <title>Call Flutter Function from JavaScript</title>
-//   <style>
-//     body {
-//       font-size: 30px; /* Set the font size for the body */
-//     }
-//     button {
-//       font-size: 30px; /* Set the font size for the button */
-//       padding: 30px 30px; /* Set the padding for the button */
-//     }
-//   </style>
-// </head>
-// <body>
-//   <h1>Call Flutter Function from JavaScript</h1>
-//   <button onclick="sendMessageToFlutter()">Send Message to Flutter</button>
-//
-//   <script>
-//     function sendMessageToFlutter() {
-//       // Call the Flutter function using the FlutterChannel
-//       FlutterChannel.postMessage("Hello from JavaScript!");
-//     }
-//   </script>
-// </body>
-// </html>
-//     """;
-
-
 String html = """
-      <html>
+<html>
 <head>
-    <title>Login Page</title>
-</head>
-<body>
-<button id="loginBtn">Login</button>
-
-<script>
-    const handleLoginBtnClick = () => {
-        const handleApiRes = (res) => {
-
-            if (code === 200) {
-                setUserToken(result)
-
-                showToastSucces({
-                    message: msgdescription,
-                    options: {
-                        autoClose: 2000,
-                    },
-                })
-
-            } else {
-                showToastError({
-                    message: msgdescription,
-                    options: {
-                        autoClose: 2000,
-                    },
-                })
-            }
-
-            window.setToken = null
+    <title>Example Page</title>
+    <style>
+        body {
+          font-family: Arial, sans-serif;
+          background-color: #f0f0f0;
+          padding: 20px;
         }
-
-        window.setToken = (token) => {
-            console.log('token ->', token)
+        h1 {
+          color: #333;
         }
-
-    try {
-    if (window.NativeJavascriptInterface) {
+        p {
+          color: #666;
+        }
+    </style>
+    <script>
+        function sendToFlutter() {
+          // if (window.FlutterChannel) {
+          //     console.error("FlutterChannel available");
+          //   window.FlutterChannel.postMessage("Button Clicked");
+          // } else {
+          //   console.error("FlutterChannel not available");
+          // }
+          
+           if (window.NativeJavascriptInterface) {
         window.NativeJavascriptInterface.generateToken()
     } else if (
         window.webkit &&
@@ -161,15 +119,86 @@ String html = """
         console.log('No native APIs found.')
         window.setToken(null)
     }
-} catch (err) {
-    console.log(err)
-    window.alert(err)
-}
-
-    }
-
-    document.getElementById('loginBtn').addEventListener('click', handleLoginBtnClick)
-</script>
+    
+        }
+    </script>
+</head>
+<body>
+<h1>Hello, Flutter!</h1>
+<p>This is an example HTML file loaded into a WebView in a Flutter app.</p>
+<button onclick="sendToFlutter()">Send Message to Flutter</button>
 </body>
 </html>
     """;
+
+
+// String html = """
+//       <html>
+// <head>
+//     <title>Login Page</title>
+// </head>
+// <body>
+// <button id="loginBtn">Login</button>
+//
+// <script>
+//     const handleLoginBtnClick = () => {
+//         const handleApiRes = (res) => {
+//
+//             if (code === 200) {
+//                 setUserToken(result)
+//
+//                 showToastSucces({
+//                     message: msgdescription,
+//                     options: {
+//                         autoClose: 2000,
+//                     },
+//                 })
+//
+//             } else {
+//                 showToastError({
+//                     message: msgdescription,
+//                     options: {
+//                         autoClose: 2000,
+//                     },
+//                 })
+//             }
+//
+//             window.setToken = null
+//         }
+//
+//         window.setToken = (token) => {
+//             console.log('token ->', token)
+//         }
+//
+//     try {
+//     if (window.NativeJavascriptInterface) {
+//         window.NativeJavascriptInterface.generateToken()
+//     } else if (
+//         window.webkit &&
+//         window.webkit.messageHandlers.NativeJavascriptInterface
+//     ) {
+//         // Call iOS interface
+//         window.webkit.messageHandlers.NativeJavascriptInterface.postMessage(
+//             'callPostMessage'
+//         )
+//     }else if (window.FlutterChannel) {
+//          // Call Flutter code
+//          window.FlutterChannel.postMessage("GenerateFCMToken");
+//
+//     } else {
+//         // No Android or iOS, Flutter interface found
+//         console.log('No native APIs found.')
+//         window.setToken(null)
+//     }
+// } catch (err) {
+//     console.log(err)
+//     window.alert(err)
+// }
+//
+//     }
+//
+//     document.getElementById('loginBtn').addEventListener('click', handleLoginBtnClick)
+// </script>
+// </body>
+// </html>
+//     """;
