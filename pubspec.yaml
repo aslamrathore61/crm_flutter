@@ -19,7 +19,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.3.4 <4.0.0'
+  sdk: '>=3.2.6 <4.0.0'
 
 
 # Dependencies specify other packages that your package needs in order to work.
@@ -35,15 +35,30 @@ dependencies:
   webview_flutter: ^4.7.0
   screenshot: ^2.3.0
 #  share_plus: ^9.0.0
-  connectivity_plus: ^5.0.2
+#  connectivity_plus: ^5.0.2
+  internet_connection_checker_plus: ^2.3.0
+
   floating_draggable_widget: ^2.1.5
   path_provider: ^2.1.3
   flutter_windowmanager: ^0.2.0
   shared_preferences: ^2.2.3
-
+  flutter_bloc: ^8.1.4
   location: ^5.0.3
   geolocator: ^11.0.0
   permission_handler: ^11.3.0
+  url_launcher: ^6.2.6
+  lottie: ^3.1.1
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  dio: ^5.4.3+1
+  flutter_native_splash: ^2.4.0
+  package_info_plus: ^8.0.0
+  flutter_svg: ^2.0.10+1
+  intl: ^0.19.0
+  share_plus: ^9.0.0
+  device_info_plus: ^9.1.2
+  image_picker: ^1.0.7
+  image_cropper: ^5.0.1
 
   #Firebase
   firebase_core: ^2.30.1
@@ -52,7 +67,7 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   #  firebase_analytics: ^10.10.4
 
-#  fluttertoast: ^8.2.5
+  fluttertoast: ^8.2.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -62,6 +77,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.9
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your
@@ -80,8 +97,17 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
+  fonts:
+    - family: Nunito
+      fonts:
+          - asset: fonts/nunito_regular.ttf
+#          - asset: fonts/test_fonts.ttf
+
   assets:
+    - assets/icons/
     - assets/images/
+    - assets/jsonFile/
+    - assets/lottie/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

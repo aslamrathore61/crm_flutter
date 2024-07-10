@@ -1,18 +1,35 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <!-- Permission to read files from external storage (outside application container).
+         As of Android 12 this permission no longer has any effect. Instead use the
+         READ_MEDIA_IMAGES, READ_MEDIA_VIDEO or READM_MEDIA_AUDIO permissions. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <!-- Permissions to read media files. -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
 
     <application
-        android:networkSecurityConfig="@xml/network_security_config"
         android:label="CRM Flutter"
-        android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:exported="true"
+        android:launchMode="singleTop"
+        android:icon="@mipmap/ic_launcher_secondary"
+        android:roundIcon="@mipmap/ic_launcher_secondary_round"
+        android:theme="@style/LaunchTheme"
+        android:requestLegacyExternalStorage="true"
+        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        >
         <activity
-            android:name=".MainActivity"
+            android:name=".crm_flutter.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
+            android:icon="@mipmap/ic_launcher_secondary"
+            android:roundIcon="@mipmap/ic_launcher_secondary_round"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -37,7 +54,7 @@
 
             <meta-data
                 android:name="com.google.firebase.messaging.default_notification_icon"
-                android:resource="@mipmap/ic_launcher_round" />
+                android:resource="@mipmap/ic_launcher_secondary_round" />
 
         </activity>
         <!-- Don't delete the meta-data below.
@@ -45,6 +62,11 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"/>
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility?hl=en and
