@@ -6,6 +6,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import 'Component/UpdateMaintainance/ForceUpdateScreen.dart';
 import 'Component/UpdateMaintainance/MaintenanceScreen.dart';
 import 'Network/ApiProvider.dart';
@@ -39,6 +40,7 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 Future<void> main() async {
+
 
   WidgetsFlutterBinding.ensureInitialized();
 

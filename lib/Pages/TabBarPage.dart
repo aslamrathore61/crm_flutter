@@ -17,6 +17,7 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -35,6 +36,7 @@ import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:permission_handler/permission_handler.dart' as ph;
+
 /// Flutter code sample for [TabBar].
 
 class TabBarPage extends StatefulWidget {
@@ -98,7 +100,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
                 channel!.id,
                 channel!.name,
                 priority: Priority.defaultPriority,
-               importance: Importance.defaultImportance,
+                importance: Importance.defaultImportance,
                 styleInformation: DefaultStyleInformation(true, true),
                 largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
                 channelShowBadge: true,
@@ -114,7 +116,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     // Get any messages which caused the application to open from
     // a terminated state.
     RemoteMessage? initialMessage =
-        await FirebaseMessaging.instance.getInitialMessage();
+    await FirebaseMessaging.instance.getInitialMessage();
 
     // If the message also contains a data property with a "type" of "chat",
     // navigate to a chat screen
@@ -164,20 +166,16 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   }
 
 
-  void CommonLoadRequest(
-      String url, WebViewController webViewController, BuildContext _context) {
-
-
+  Future<void> CommonLoadRequest(String url,
+      WebViewController webViewController, BuildContext _context) async {
     javaScriptCall(webViewController, _context);
     // _webViewController.loadHtmlString(html);
     _webViewController.loadRequest(Uri.parse(url));
   }
 
   void CallAppIconChangerMethod(String message) async {
-   // await platform.invokeMethod('AppIconChange', message);
+    // await platform.invokeMethod('AppIconChange', message);
   }
-
-
 
 
   void _internetConnectionStatus() {
@@ -186,7 +184,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         case InternetStatus.connected:
           setState(() {
             IsInternetConnected = true;
-            if(tabGetChangesAfterInternetGon) {
+            if (tabGetChangesAfterInternetGon) {
               CommonLoadRequest(deepLinkingURL, _webViewController, context);
             }
           });
@@ -198,15 +196,35 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
           break;
       }
     });
+  }
 
+  static const platform = MethodChannel('com.example.webview/settings');
+
+  Future<void> _configureWebView() async {
+    try {
+      await platform.invokeMethod('configureWebView', {
+        'textZoom': 30, // Example value
+        'textSize': 'SMALLEST', // Example value
+      });
+    } on PlatformException catch (e) {
+      print("Failed to configure webview: ${e.message}");
+    }
+  }
+
+  void _hideSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+  }
+
+  void _showSystemUI() {
+    SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual, overlays: SystemUiOverlay.values);
   }
 
 
   @override
   void initState() {
     super.initState();
-
-
+    //  _configureWebView();
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
       params = WebKitWebViewControllerCreationParams(
@@ -231,7 +249,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     ));
 
     // #docregion platform_features
-
 
 
     _checkInitialConnectivity();
@@ -263,7 +280,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   }
 
   Future<void> _onTabTapped(int index, String url, String _id) async {
-
     currentTabIndex = index;
 
     if (url.isEmpty) return;
@@ -285,8 +301,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         // _webViewController.loadHtmlString(html);
       });
     } else {
-
-
       if (widget.userInfo != null) {
         print('launchURL $url${widget.userInfo?.token}');
         _launchUrl('$url ${widget.userInfo?.token}');
@@ -304,30 +318,32 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   }
 
   Future<void> _checkInitialConnectivity() async {
-
     bool isConnected = await InternetConnection().hasInternetAccess;
 
-    if(isConnected) _webViewController.reload();
+    if (isConnected) _webViewController.reload();
 
 
-      if (isConnected) {
-        IsInternetConnected = isConnected;
-      }
+    if (isConnected) {
+      IsInternetConnected = isConnected;
+    }
 
     setState(() {
       IsInternetConnected;
     });
-
-
   }
 
 
   bool canPop = false;
+  bool _isLoading = false;
+
   late double _statusBarHeight;
 
   @override
   Widget build(BuildContext context) {
-    _statusBarHeight = MediaQuery.of(context).padding.top;
+    _statusBarHeight = MediaQuery
+        .of(context)
+        .padding
+        .top;
     return PopScope(
       canPop: canPop,
       onPopInvoked: (didPop) async {
@@ -335,14 +351,18 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
           _exitApp(context);
         }
       },
-      child: Container(
-        child: Scaffold(
+      child: Scaffold(
           key: _scaffoldKey,
           body: IsInternetConnected == false ? Center(
             child: NoInternetConnectionPage(
               tryAgain: _checkInitialConnectivity,
             ),
-          ) : Container(
+          ) : Stack(
+
+            children: [
+
+
+            Container(
             color: Colors.white,
             margin: EdgeInsets.only(top: _statusBarHeight),
             child: WebViewWidget(
@@ -361,42 +381,41 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
                     },
                     onPageStarted: (String url) {
                       setState(() {
-                        if(url == Config.HOME_URL){
+                        if (url == Config.HOME_URL) {
                           _tabController.index = 1;
-                        }else if(url.contains('leads') && !url.contains('bulk')) {
+                        } else if (url.contains('leads') && !url.contains(
+                            'bulk')) {
                           _tabController.index = 0;
                           setState(() {
                             print('leadGetCall');
                             tabbarvisibility = true;
                           });
-                        }else if(url.contains('bulk-leads')) {
+                        } else if (url.contains('bulk-leads')) {
                           _tabController.index = 2;
-                        }else if(url.contains('dialer')) {
+                        } else if (url.contains('dialer')) {
                           _tabController.index = 3;
-                        }else if(url.contains('bucket')) {
+                        } else if (url.contains('bucket')) {
                           _tabController.index = 4;
-                        }else if(url.contains('login')) {
+                        } else if (url.contains('login')) {
                           setState(() {
                             print('logingetCall');
                             tabbarvisibility = false;
                           });
-                        }else {
+                        } else {
 
                         }
-
-
                       });
                       print('onPageStarted $url');
                     },
                     onPageFinished: (String url) {
                       print('onPageFinished $url');
-
                     },
                     onWebResourceError: (WebResourceError error) {
-                      print('onWebResourceError ${error.errorCode} ${error.description}');
+                      print('onWebResourceError ${error.errorCode} ${error
+                          .description}');
 
-                      if(error.errorCode == -10) {
-                      //  _webViewController.goBack();
+                      if (error.errorCode == -10) {
+                        //  _webViewController.goBack();
                       }
 
                       /* print('onWebResourceError ${error.errorType} ${error.errorCode} ${error.description}');
@@ -412,13 +431,12 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
                       print('httpResponseError $error');
                     },
                     onNavigationRequest: (NavigationRequest request) {
-
                       final url = request.url;
 
-                      if(url.contains("https://api.whatsapp.com")) {
+                      if (url.contains("https://api.whatsapp.com")) {
                         _launchUrl(url);
                         return NavigationDecision.prevent;
-                      }else if(url.contains("tel:")) {
+                      } else if (url.contains("tel:")) {
                         _launchUrl(url);
                         return NavigationDecision.prevent;
                       }
@@ -449,93 +467,131 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
                       }
 
                       return NavigationDecision.navigate;
-
                     },
                   ),
                 ),
             ),
           ),
-         /* bottomNavigationBar: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border(
-                top: BorderSide(
-                  color: Colors.grey, // Top border color for the TabBar
-                  width: 0.5, // Width of the top border
+
+
+
+              if (_isLoading) ...[
+                ModalBarrier(
+                  dismissible: false,
+                  color: Colors.black.withOpacity(0.3),
                 ),
-              ),
-            ),
-            child: Visibility(
-              visible: tabbarvisibility,
-              child: TabBar(
-                labelColor: Colors.blue.shade900,
-                unselectedLabelColor: Colors.grey.shade700,
-                controller: _tabController,
-                indicator: BoxDecoration(
-                  border: Border(
-                    top: BorderSide(
-                      color: Colors.blue.shade900, // Color of the indicator
-                      width: 4.0, // Height of the indicator
+                Center(
+                  child: CircularProgressIndicator(color: Color(0xFF0054a0),)
+                ),
+              ],
+
+             /* if (_isLoading) ...[
+                ModalBarrier(
+                  dismissible: false,
+                  color: Colors.black.withOpacity(0.3),
+                ),
+                Center(
+                  child: AlertDialog(
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(height: 20),
+                        CircularProgressIndicator(color: Colors.blue.shade900,),
+                        SizedBox(height: 20),
+                        Text("Uploading Image.."),
+                      ],
                     ),
                   ),
                 ),
-                labelPadding: EdgeInsets.symmetric(vertical: 0),
-                labelStyle: TextStyle(fontSize: 11, fontFamily: 'Nunito',
-                    fontWeight: FontWeight.bold),
-                unselectedLabelStyle: TextStyle(
-                  fontSize: 11,
-                  fontFamily: 'Poppins',
-                  fontWeight: FontWeight.normal
-                ),
-                splashFactory: NoSplash.splashFactory,
-                onTap: (index) {
-                  final url = widget.nativeItem.bottom![index].uRL!;
-                  _onTabTapped(
-                      index, url, widget.nativeItem.bottom![index].id!);
-                },
-                tabs: widget.nativeItem.bottom!.map((item) {
-                  final svgBytes = base64Decode(item.icon!);
-                  final svgString = utf8.decode(svgBytes);
-                  return Tab(
-                    icon: SvgPicture.string(
-                      svgString,
-                      width: 21.0,
-                      height: 21.0,
-                      color: _tabController.index ==
-                              widget.nativeItem.bottom!.indexOf(item)
-                          ? Colors.blue.shade900
-                          : Colors.black,
-                    ),
-                    text: item.title,
-                  );
-                }).toList(),
+              ],*/
+
+
+
+    ],
+
+    )
+    ,
+    /* bottomNavigationBar: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border(
+              top: BorderSide(
+                color: Colors.grey, // Top border color for the TabBar
+                width: 0.5, // Width of the top border
               ),
             ),
-          ),*/
-        ),
-      ),
+          ),
+          child: Visibility(
+            visible: tabbarvisibility,
+            child: TabBar(
+              labelColor: Colors.blue.shade900,
+              unselectedLabelColor: Colors.grey.shade700,
+              controller: _tabController,
+              indicator: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: Colors.blue.shade900, // Color of the indicator
+                    width: 4.0, // Height of the indicator
+                  ),
+                ),
+              ),
+              labelPadding: EdgeInsets.symmetric(vertical: 0),
+              labelStyle: TextStyle(fontSize: 11, fontFamily: 'Nunito',
+                  fontWeight: FontWeight.bold),
+              unselectedLabelStyle: TextStyle(
+                fontSize: 11,
+                fontFamily: 'Poppins',
+                fontWeight: FontWeight.normal
+              ),
+              splashFactory: NoSplash.splashFactory,
+              onTap: (index) {
+                final url = widget.nativeItem.bottom![index].uRL!;
+                _onTabTapped(
+                    index, url, widget.nativeItem.bottom![index].id!);
+              },
+              tabs: widget.nativeItem.bottom!.map((item) {
+                final svgBytes = base64Decode(item.icon!);
+                final svgString = utf8.decode(svgBytes);
+                return Tab(
+                  icon: SvgPicture.string(
+                    svgString,
+                    width: 21.0,
+                    height: 21.0,
+                    color: _tabController.index ==
+                            widget.nativeItem.bottom!.indexOf(item)
+                        ? Colors.blue.shade900
+                        : Colors.black,
+                  ),
+                  text: item.title,
+                );
+              }).toList(),
+            ),
+          ),
+        ),*/
+    )
+    ,
     );
   }
 
-  void javaScriptCall(
-      WebViewController webViewController, BuildContext context) {
+  void javaScriptCall(WebViewController webViewController,
+      BuildContext context) {
     webViewController.removeJavaScriptChannel('FlutterChannel');
     webViewController.addJavaScriptChannel('FlutterChannel',
         onMessageReceived: (message) async {
-      print('FlutterChannelDetails ${message.message}');
-      try {
-        var data = jsonDecode(message.message);
-        if (data is Map<String, dynamic>) {
-          _handleJsonMessageUserInfo(data);
-        } else {
-          print('ReceivedNonJsonMessage: ${message.message}');
-        }
-      } catch (e) {
-        // Handle as a plain string message
-        print('ReceivedStringMessage: ${message.message}');
-        _handleStringMessage(message.message, webViewController);
-      }
-    });
+          print('FlutterChannelDetails ${message.message}');
+          try {
+            var data = jsonDecode(message.message);
+            if (data is Map<String, dynamic>) {
+              _handleJsonMessageUserInfo(data);
+            } else {
+              print('ReceivedNonJsonMessage: ${message.message}');
+            }
+          } catch (e) {
+            // Handle as a plain string message
+            print('ReceivedStringMessage: ${message.message}');
+            _handleStringMessage(message.message, webViewController);
+          }
+        });
   }
 
   Future<void> _handleJsonMessageUserInfo(Map<String, dynamic> data) async {
@@ -545,26 +601,23 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         shareURL(data['text'], data['url']);
         //title
       } else if (data['type'] == 'login') {
-
         String barearToken = data['token'];
         await setPrefStringValue(Config.BarearToken, barearToken);
-
       } else if (data['flutter'] == 'profile') {
         setState(() {
           profileResponse = ProfileResponse.fromJson(data);
         });
 
-      //  print('profileRespons ${profileResponse!.toJson()}');
-      }else if(data['action'] == 'BottomViewVisibility'){
-
+        //  print('profileRespons ${profileResponse!.toJson()}');
+      } else if (data['action'] == 'BottomViewVisibility') {
         final dynamic boolValue = data['visibility'];
-        final parsedValue = boolValue is bool ? boolValue : boolValue.toString().toLowerCase() == 'true';
+        final parsedValue = boolValue is bool ? boolValue : boolValue.toString()
+            .toLowerCase() == 'true';
 
         setState(() {
           tabbarvisibility = parsedValue;
           print('visibilityCheck $tabbarvisibility');
         });
-
       } else {
         final UserInfo userInfo = UserInfo.fromJson(data);
         var box = await Hive.openBox<UserInfo>(Config.USER_INFO_BOX);
@@ -583,8 +636,8 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     Share.share('$text\n$url');
   }
 
-  Future<void> _handleStringMessage(
-      String message, WebViewController webViewController) async {
+  Future<void> _handleStringMessage(String message,
+      WebViewController webViewController) async {
     if (message == "getBottomToolbar") {
       final packageInfo = await PackageInfo.fromPlatform();
       final versionNumber = packageInfo.version;
@@ -601,56 +654,71 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       showOptions();
     } else if (message == "GenerateFCMToken") {
       sentDeviceInfoToWeb(_webViewController);
-    }/* else if (message == "GetLocation") {
+    }
+    /* else if (message == "GetLocation") {
       setLatLongToWeb(webViewController, context,false);
-    }*/else if (message == "TrackCall") {
-      setLatLongToWeb(webViewController, context,true);
-    }else if (message == "agentClockOut" || message == "agentClockIn") {
-      setLatLongToWeb(webViewController, context,false);
+    }*/ else if (message == "TrackCall") {
+      setLatLongToWeb(webViewController, context, 2);
+    } else if (message == "agentClockOut" || message == "agentClockIn") {
+      setLatLongToWeb(webViewController, context, 1);
+    } else if (message == "getActivityCoordinate") {
+      setLatLongToWeb(webViewController, context, 0);
+    } else if (message == "showMap") {
+      _hideSystemUI();
+    } else if (message == "closeMap") {
+      _showSystemUI();
     }
   }
-
 
 
   Future<void> sentDeviceInfoToWeb(WebViewController webViewController) async {
     print("getCallSystem");
     try {
-
       final packageInfo = await PackageInfo.fromPlatform();
 
-      if (Theme.of(context).platform == TargetPlatform.android) {
+      if (Theme
+          .of(context)
+          .platform == TargetPlatform.android) {
         androidInfo = await deviceInfo.androidInfo;
-      } else if (Theme.of(context).platform == TargetPlatform.iOS) {
+      } else if (Theme
+          .of(context)
+          .platform == TargetPlatform.iOS) {
         iosInfo = await deviceInfo.iosInfo;
       }
 
-      if(androidInfo != null) {
-        print("androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!.model} ,${androidInfo!.version.release}");
-
-      }else if(iosInfo != null) {
-        print("IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!.model} ,${iosInfo!.systemVersion} ");
-      }else {
+      if (androidInfo != null) {
+        print("androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!
+            .model} ,${androidInfo!.version.release}");
+      } else if (iosInfo != null) {
+        print("IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!
+            .model} ,${iosInfo!.systemVersion} ");
+      } else {
         print("systemGetcall");
       }
 
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? fcmToken = prefs.getString('fcmToken');
-    //  print('fcmToken : $fcmToken');
-    //  webViewController.runJavaScript('setToken("$fcmToken")');
+      //  print('fcmToken : $fcmToken');
+      //  webViewController.runJavaScript('setToken("$fcmToken")');
 
-      String jsCode = '{"DeviceInfo": "${androidInfo!.manufacturer} ${androidInfo!.model} ${androidInfo!.version.release} ", "AppVersion": "${packageInfo.buildNumber}", "FirebaseFCM": "$fcmToken"}';
-    print("jsCode $jsCode");
+      String jsCode = '{"DeviceInfo": "${androidInfo!
+          .manufacturer} ${androidInfo!.model} ${androidInfo!.version
+          .release} ", "AppVersion": "${packageInfo
+          .buildNumber}", "FirebaseFCM": "$fcmToken"}';
+      print("jsCode $jsCode");
       webViewController.runJavaScript('setDeviceInfo(`$jsCode`)');
-
-
     } catch (e) {
       print('Failed to get device info: $e');
     }
   }
 
 
-  Future<void> setLatLongToWeb(WebViewController webViewController, BuildContext context, bool isTrackCall) async {
+  Future<void> setLatLongToWeb(WebViewController webViewController,
+      BuildContext context, int coordinateType) async {
+    // coordinateType =  0 means required activity coordinate
+    // coordinateType = 1 means clock in and out
+    // coordinateType = 2 means punch
     Location location = Location();
     bool serviceEnabled = await location.serviceEnabled();
     if (!serviceEnabled) {
@@ -667,27 +735,28 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       if (permission == LocationPermission.deniedForever) {
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Location Permission Required'),
-            content: Text(
-                'Please enable location permissions in your device settings to use this feature.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: Text('Cancel'),
+          builder: (context) =>
+              AlertDialog(
+                title: Text('Location Permission Required'),
+                content: Text(
+                    'Please enable location permissions in your device settings to use this feature.'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // Open the app settings
+                      Navigator.pop(context);
+                      ph.openAppSettings();
+                    },
+                    child: Text('Settings'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () {
-                  // Open the app settings
-                  Navigator.pop(context);
-                  ph.openAppSettings();
-                },
-                child: Text('Settings'),
-              ),
-            ],
-          ),
         );
         return;
       } else if (permission != LocationPermission.whileInUse &&
@@ -696,14 +765,36 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       }
     }
 
+    setState(() {
+      _isLoading = true;
+    });
+
     Position? position = await Geolocator.getLastKnownPosition();
 
-    if(position == null) {
-      return;
+    position ??= await geolocator.Geolocator.getCurrentPosition(
+        desiredAccuracy: geolocator.LocationAccuracy.high
+    );
+
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (coordinateType == 0) {
+      print('Coordinate0: ${position.latitude}, ${position.longitude}');
+      String cordinate = "${position.latitude},${position.longitude}";
+      webViewController.runJavaScript('setActivityCoordinate(`$cordinate`)');
+    } else if (coordinateType == 1) {
+      print('Coordinate1: ${position.latitude}, ${position.longitude}');
+      String cordinate = "${position.latitude},${position.longitude}";
+      webViewController.runJavaScript('setLatlng(`$cordinate`)');
+    } else if (coordinateType == 2) {
+      print('Coordinate2: ${position.latitude}, ${position.longitude}');
+      String cordinate = "${position.latitude},${position.longitude}";
+      webViewController.runJavaScript('setTrackLatLng("$cordinate")');
     }
 
-
-    if(isTrackCall) {
+/*    if(isTrackCall) {
       print('isTrackCall: ${position.latitude}, ${position.longitude}');
       String cordinate = "${position.latitude},${position.longitude}";
       //  webViewController.runJavaScript('setTrackLatLngFlutter(`$cordinate`)');
@@ -714,7 +805,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       String cordinate = "${position.latitude},${position.longitude}";
         webViewController.runJavaScript('setLatlng(`$cordinate`)');
 
-    }
+    }*/
 
   }
 
@@ -728,7 +819,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     } else {
       _webViewController.currentUrl().then((currentUrl) {
         print('CurrentURL: $currentUrl');
-        if (currentUrl == Config.HOME_URL+"leads") {
+        if (currentUrl == Config.HOME_URL + "leads") {
           setState(() {
             SystemNavigator.pop();
             //canPop = true;
@@ -740,80 +831,94 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
 
   //Show options to get image from camera or gallery
   Future showOptions() async {
-    showCupertinoModalPopup(
-      context: context,
-      builder: (context) => CupertinoActionSheet(
-        actions: [
-        /*  CupertinoActionSheetAction(
-            child: Text('Photo Gallery'),
-            onPressed: () async {
-              // close the options modal
-              Navigator.of(context).pop();
 
-              AndroidDeviceInfo? deviceInfo;
+    var permissionStatus = await ph.Permission.camera.request();
 
-              if (Platform.isAndroid) {
-                deviceInfo = await DeviceInfoPlugin().androidInfo;
-              }
+    if (permissionStatus.isGranted) {
+      // get image from camera
+      getImageFromCamera();
+    } else if (permissionStatus.isPermanentlyDenied) {
+      showPermissionSettingsDialog(context,
+          'Please enable storage permission in app settings to use this feature.');
+    }
 
-              if (Platform.isAndroid &&
-                  deviceInfo != null &&
-                  deviceInfo.version.sdkInt <= 32) {
-                var permissionStatus = await Permission.storage.request();
-                if (permissionStatus.isGranted) {
-                  getImageFromGallery();
-                } else if (permissionStatus.isPermanentlyDenied) {
-                  showPermissionSettingsDialog(context,
-                      'Please enable storage permission in app settings to use this feature.');
-                }
-              } else {
-                var permissionStatus = await Permission.photos.request();
-                if (permissionStatus.isGranted) {
-                  getImageFromGallery();
-                } else if (permissionStatus.isPermanentlyDenied) {
-                  showPermissionSettingsDialog(context,
-                      'Please enable storage permission in app settings to use this feature.');
-                }
-              }
-            },
-          ),*/
-          CupertinoActionSheetAction(
-            child: Text('Camera'),
-            onPressed: () async {
-              // close the options modal
-              Navigator.of(context).pop();
-              var permissionStatus = await ph.Permission.camera.request();
-
-              if (permissionStatus.isGranted) {
-                // get image from camera
-                getImageFromCamera();
-              } else if (permissionStatus.isPermanentlyDenied) {
-                showPermissionSettingsDialog(context,
-                    'Please enable storage permission in app settings to use this feature.');
-              }
-            },
-          ),
-        ],
-      ),
-    );
+    // showCupertinoModalPopup(
+    //   context: context,
+    //   builder: (context) =>
+    //       CupertinoActionSheet(
+    //         actions: [
+    //           /*  CupertinoActionSheetAction(
+    //         child: Text('Photo Gallery'),
+    //         onPressed: () async {
+    //           // close the options modal
+    //           Navigator.of(context).pop();
+    //
+    //           AndroidDeviceInfo? deviceInfo;
+    //
+    //           if (Platform.isAndroid) {
+    //             deviceInfo = await DeviceInfoPlugin().androidInfo;
+    //           }
+    //
+    //           if (Platform.isAndroid &&
+    //               deviceInfo != null &&
+    //               deviceInfo.version.sdkInt <= 32) {
+    //             var permissionStatus = await Permission.storage.request();
+    //             if (permissionStatus.isGranted) {
+    //               getImageFromGallery();
+    //             } else if (permissionStatus.isPermanentlyDenied) {
+    //               showPermissionSettingsDialog(context,
+    //                   'Please enable storage permission in app settings to use this feature.');
+    //             }
+    //           } else {
+    //             var permissionStatus = await Permission.photos.request();
+    //             if (permissionStatus.isGranted) {
+    //               getImageFromGallery();
+    //             } else if (permissionStatus.isPermanentlyDenied) {
+    //               showPermissionSettingsDialog(context,
+    //                   'Please enable storage permission in app settings to use this feature.');
+    //             }
+    //           }
+    //         },
+    //       ),*/
+    //           CupertinoActionSheetAction(
+    //             child: Text('Camera'),
+    //             onPressed: () async {
+    //               // close the options modal
+    //               Navigator.of(context).pop();
+    //               var permissionStatus = await ph.Permission.camera.request();
+    //
+    //               if (permissionStatus.isGranted) {
+    //                 // get image from camera
+    //                 getImageFromCamera();
+    //               } else if (permissionStatus.isPermanentlyDenied) {
+    //                 showPermissionSettingsDialog(context,
+    //                     'Please enable storage permission in app settings to use this feature.');
+    //               }
+    //             },
+    //           ),
+    //         ],
+    //       ),
+    // );
   }
 
   //Image Picker function to get image from gallery
   Future getImageFromGallery() async {
     await picker
         .pickImage(source: ImageSource.gallery, imageQuality: 25)
-        .then((value) => {
-              if (value != null) {cropImageCall(File(value.path))}
-            });
+        .then((value) =>
+    {
+      if (value != null) {cropImageCall(File(value.path))}
+    });
   }
 
   //Image Picker function to get image from camera
   Future getImageFromCamera() async {
     await picker
         .pickImage(source: ImageSource.camera, imageQuality: 25)
-        .then((value) async => {
-              if (value != null) {cropImageCall(File(value.path))}
-            });
+        .then((value) async =>
+    {
+      if (value != null) {cropImageCall(File(value.path))}
+    });
   }
 
   cropImageCall(File imgFile) async {
@@ -826,65 +931,75 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   }
 
   Future<void> uploadImage(File imageFile) async {
+    setState(() {
+      _isLoading = true;
+    });
+
 
     String barearToken = await getPrefStringValue(Config.BarearToken);
     final dio = Dio();
-    const url = 'https://syncapp.savemax.com/api/file-upload/image';
+    const url = Config.IMAGE_UPLOAD;
 
-      // Generate the current date and time in the desired format
-      String formattedDate =
-          DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
-      String name = 'properties_$formattedDate.png';
+    // Generate the current date and time in the desired format
+    String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(
+        DateTime.now());
+    String noSpacesStr = formattedDate.replaceAll(' ', '_');
+    String name = 'properties_$noSpacesStr.png';
 
-      FormData formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(imageFile.path, filename: name),
+    FormData formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(imageFile.path, filename: name),
+    });
+
+    try {
+      final response = await dio.post(
+          url, data: formData, options: Options(headers: {
+        'Authorization': 'Bearer $barearToken', // Replace with your token
+        'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json, text/plain, */*',
+        'Referer': 'https://sync.savemax.com/',
+        'platform': 'web',
+        'sec-ch-ua':
+        '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"'
+      },));
+      var responseData = jsonEncode(response.data);
+
+      setState(() {
+        _isLoading = false;
       });
 
-      try {
-        final response = await dio.post(url, data: formData,options: Options( headers: {
-          'Authorization': 'Bearer $barearToken', // Replace with your token
-          'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-          'Content-Type': 'application/json',
-          'Accept': 'application/json, text/plain, */*',
-          'Referer': 'https://sync.savemax.com/',
-          'platform': 'web',
-          'sec-ch-ua':
-          '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-          'sec-ch-ua-mobile': '?0',
-          'sec-ch-ua-platform': '"Windows"'
-        },));
-        var responseData = jsonEncode(response.data);
+      print("jsonResponse : $responseData");
 
-        print("jsonResponse : $responseData");
-
-        if (response.statusCode == 200) {
-          _webViewController.runJavaScript('getSiteVisitImage($responseData)');
-        } else {
-          print('Image upload failed: ${response.statusCode}');
-        }
-
-      } catch (e) {
-        print('Error occurred: $e');
+      if (response.statusCode == 200) {
+        _webViewController.runJavaScript('getSiteVisitImage($responseData)');
+      } else {
+        print('Image upload failed: ${response.statusCode}');
       }
+    } catch (e) {
+      print('Error occurred: $e');
+    }
   }
 
   void showPermissionSettingsDialog(BuildContext context, String msg) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Permission Required'),
-        content: Text('$msg'),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await ph.openAppSettings();
-            },
-            child: Text('Open Settings'),
+      builder: (context) =>
+          AlertDialog(
+            title: Text('Permission Required'),
+            content: Text('$msg'),
+            actions: [
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await ph.openAppSettings();
+                },
+                child: Text('Open Settings'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
 }

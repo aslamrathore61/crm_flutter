@@ -11,7 +11,6 @@ import '../Utils.dart';
 
 class ApiProvider {
   final Dio _dio = Dio();
-  final String _baseUrl = 'https://syncapp.savemax.com/api/other/menu-item/';
 
   ApiProvider() {
     // Add interceptors for logging and error handling
@@ -94,7 +93,7 @@ class ApiProvider {
 
     try {
       Response response = await _dio.get(
-        '${_baseUrl}app-version',
+        '${Config.MENU_API}app-version',
         queryParameters: {'requestAppVersion': menuVersion},
         options: Options(
           headers: {
