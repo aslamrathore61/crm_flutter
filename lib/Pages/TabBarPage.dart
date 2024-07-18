@@ -1,7 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'dart:io';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
@@ -25,7 +23,6 @@ import 'package:webview_flutter/webview_flutter.dart';
 import '../Config.dart';
 import '../SharePrefFile.dart';
 import '../Utils.dart';
-import '../Utils/constants.dart';
 import '../main.dart';
 import '../model/ProfileResponse.dart';
 import '../model/native_item.dart';
@@ -224,6 +221,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
+
     //  _configureWebView();
     late final PlatformWebViewControllerCreationParams params;
     if (WebViewPlatform.instance is WebKitWebViewPlatform) {
@@ -687,13 +685,9 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       }
 
       if (androidInfo != null) {
-        print("androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!
-            .model} ,${androidInfo!.version.release}");
+        print("androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!.model} ,${androidInfo!.version.release}");
       } else if (iosInfo != null) {
-        print("IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!
-            .model} ,${iosInfo!.systemVersion} ");
-      } else {
-        print("systemGetcall");
+        print("IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!.model} ,${iosInfo!.systemVersion} ");
       }
 
 
@@ -702,10 +696,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       //  print('fcmToken : $fcmToken');
       //  webViewController.runJavaScript('setToken("$fcmToken")');
 
-      String jsCode = '{"DeviceInfo": "${androidInfo!
-          .manufacturer} ${androidInfo!.model} ${androidInfo!.version
-          .release} ", "AppVersion": "${packageInfo
-          .buildNumber}", "FirebaseFCM": "$fcmToken"}';
+      String jsCode = '{"DeviceInfo": "${androidInfo!.manufacturer} ${androidInfo!.model} ${androidInfo!.version.release} ", "AppVersion": "VersionCode: ${packageInfo.buildNumber} VersionName: ${packageInfo.version}", "AppVersionName": "${packageInfo.version}", "FirebaseFCM": "$fcmToken"}';
       print("jsCode $jsCode");
       webViewController.runJavaScript('setDeviceInfo(`$jsCode`)');
     } catch (e) {
