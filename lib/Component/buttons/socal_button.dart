@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class SocalButton extends StatelessWidget {
   final Color color;
   final String text;
-  final Widget icon;
+  final Widget? icon;
   final GestureTapCallback press;
 
   const SocalButton(
@@ -27,8 +27,11 @@ class SocalButton extends StatelessWidget {
         ),
         onPressed: press,
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
+              width: 35,
               padding: const EdgeInsets.all(5),
 
               alignment: Alignment.center,
@@ -36,10 +39,10 @@ class SocalButton extends StatelessWidget {
             ),
             const Spacer(flex: 2),
             Text(
-              text.toUpperCase(),
+              text,
               style: Theme.of(context)
                   .textTheme
-                  .bodySmall!
+                  .bodyMedium!
                   .copyWith(color: Colors.white, fontWeight: FontWeight.w600),
             ),
             const Spacer(flex: 3),

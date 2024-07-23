@@ -1,3 +1,5 @@
+import 'package:crm_flutter/bloc/gpsBloc/gps_bloc.dart';
+import 'package:crm_flutter/bloc/gpsBloc/gps_event.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -119,7 +121,9 @@ Future<void> main() async {
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
         final UserInfo? userInfo = args['userInfo'];
         final NativeItem nativeItem = args['nativeItem'];
-        return TabBarPage(nativeItem: nativeItem, userInfo: userInfo,);
+        return BlocProvider(
+          create: (context) => GPSBloc()..add(CheckGPS()),
+            child: TabBarPage(nativeItem: nativeItem, userInfo: userInfo,));
       },
       '/forceUpdatePage': (context) {
         return ForceUpdateScreen();

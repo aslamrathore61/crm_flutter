@@ -15,67 +15,47 @@ class MaintenanceScreen extends StatelessWidget {
         body: Container(
         padding: EdgeInsets.all(16.0), // Equivalent to @dimen/activity_vertical_margin
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Expanded(
-              flex: 1,
-              child: Container(
+            Container(
                 margin: EdgeInsets.symmetric(horizontal: 28.0, vertical: 28.0),
-                child: Column(
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-
-                    SizedBox(height: 30,),
-                   /* Image.asset(
-                      width: 40,
-                      height: 40,
-                      'assets/icons/savemaxdoller.png', // Update this to your actual image path
-                      fit: BoxFit.contain,
-                    ),
-                    SizedBox(height: 6,),*/
-
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('SAVE MAX CRM APP',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
+                        Text('Sync CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
                         SizedBox(height: 6,),
                         Text(' Under Maintenance!',style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w400),),
-
                       ],
                     ),
 
+
                   ],
                 ),
-              ),
-            ),
-            Expanded(
-              flex: 1,
-              child: Container(
-                child: Lottie.asset(
-                  'assets/lottie/gears.json', // Update this to your actual Lottie file path
-                  repeat: true,
-                  animate: true,
-                ),
-              ),
             ),
 
-            Expanded(
-              flex: 1,
-              child: Container(
+         Container(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Lottie.asset(
+                      'assets/lottie/gears.json', // Update this to your actual Lottie file path
+                      repeat: true,
+                      animate: true,
+                    ),
+                  ],
+                ),
+            ),
+
+            Container(
                 margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0), // Equivalent to @dimen/_8sdp
                 padding: EdgeInsets.all(8.0), // Equivalent to @dimen/_8sdp
                 child: Column(
                   children: [
                     Text(
-                      'We are experiencing a server issue, possibly due to maintenance. Please try again in a few minutes.', // Update this to your actual string resource
-                      style: TextStyle(
-                        fontSize: 16.0, // Equivalent to @dimen/_16sdp
-                        color: Color(0xFF000000), // Equivalent to @color/dark
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    SizedBox(height: 5,),
-                    Text(
-                      'Please try after sometime', // Update this to your actual string resource
+                      'We are currently performing maintenance to improve our services. The application will be temporarily unavailable, Please try after sometime.', // Update this to your actual string resource
                       style: TextStyle(
                         fontSize: 16.0, // Equivalent to @dimen/_16sdp
                         color: Color(0xFF000000), // Equivalent to @color/dark
@@ -85,19 +65,17 @@ class MaintenanceScreen extends StatelessWidget {
 
                   ],
                 ),
-              ),
             ),
 
             Container(
-              margin: EdgeInsets.all(16.0), // Equivalent to @dimen/_16sdp
+              margin: EdgeInsets.only(left: 16.0, right: 16.0), // Equivalent to @dimen/_16sdp
               child: SocalButton(
                 color: Color(0xFF0054a0),
-                icon: Icon(Icons.download,
-                    color: Colors.white, size: 16),
+                icon: null,
                 press: () {
                   SystemNavigator.pop();
                 },
-                text: "EXIST".toUpperCase(),
+                text: "Exit",
               ),
             ),
           ],

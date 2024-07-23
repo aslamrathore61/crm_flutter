@@ -12,12 +12,16 @@
     <!-- Permissions to read media files. -->
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.READ_CALL_LOG" />
+
     <!--
             android:enableOnBackInvokedCallback="true"
     -->
 
     <application
-        android:label="CRM Flutter"
+        android:label="Sync CRM"
         android:exported="true"
         android:launchMode="singleTop"
         android:icon="@mipmap/ic_launcher_secondary"

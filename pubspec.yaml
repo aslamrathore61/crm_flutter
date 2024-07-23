@@ -59,6 +59,7 @@ dependencies:
   device_info_plus: ^9.1.2
   image_picker: ^1.0.7
   image_cropper: ^5.0.1
+  call_log: ^4.0.0
 
   #Firebase
   firebase_core: ^2.30.1

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:call_log/call_log.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/cupertino.dart';
@@ -8,21 +9,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
+import 'package:lottie/lottie.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../Component/buttons/socal_button.dart';
 import '../Config.dart';
 import '../SharePrefFile.dart';
 import '../Utils.dart';
+import '../bloc/gpsBloc/gps_bloc.dart';
+import '../bloc/gpsBloc/gps_state.dart';
 import '../main.dart';
 import '../model/ProfileResponse.dart';
 import '../model/native_item.dart';
@@ -67,7 +73,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   int delaySec = 0;
   String _locationMessage = "";
 
-
   ProfileResponse? profileResponse;
 
   bool tabGetChangesAfterInternetGon = false;
@@ -76,7 +81,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
   AndroidDeviceInfo? androidInfo;
   IosDeviceInfo? iosInfo;
-
 
   Future<void> setupInteractedMessage() async {
     // To handle messages while your application is in the foreground, listen to the onMessage stream
@@ -96,8 +100,8 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
               android: AndroidNotificationDetails(
                 channel!.id,
                 channel!.name,
-                priority: Priority.defaultPriority,
-                importance: Importance.defaultImportance,
+                priority: Priority.high,
+                importance: Importance.high,
                 styleInformation: DefaultStyleInformation(true, true),
                 largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
                 channelShowBadge: true,
@@ -113,7 +117,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     // Get any messages which caused the application to open from
     // a terminated state.
     RemoteMessage? initialMessage =
-    await FirebaseMessaging.instance.getInitialMessage();
+        await FirebaseMessaging.instance.getInitialMessage();
 
     // If the message also contains a data property with a "type" of "chat",
     // navigate to a chat screen
@@ -162,7 +166,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     CommonLoadRequest(deepLinkingURL, _webViewController, context);
   }
 
-
   Future<void> CommonLoadRequest(String url,
       WebViewController webViewController, BuildContext _context) async {
     javaScriptCall(webViewController, _context);
@@ -173,7 +176,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   void CallAppIconChangerMethod(String message) async {
     // await platform.invokeMethod('AppIconChange', message);
   }
-
 
   void _internetConnectionStatus() {
     InternetConnection().onStatusChange.listen((InternetStatus status) {
@@ -209,12 +211,48 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   }
 
   void _hideSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersive);
+    SystemChrome.setEnabledSystemUIMode(
+      SystemUiMode.manual,
+      overlays: [SystemUiOverlay.bottom],
+    );
   }
 
   void _showSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(
-        SystemUiMode.manual, overlays: SystemUiOverlay.values);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: SystemUiOverlay.values);
+  }
+
+  Future<void> _fetchCallLogs(String specificNumber, DateTime from, DateTime to) async {
+
+    int totalCallDuration = 0;
+    int totalCallCount = 0;
+
+    if (await Permission.phone.request().isGranted) {
+      // Convert DateTime to milliseconds since epoch
+      int fromTimestamp = from.millisecondsSinceEpoch;
+      int toTimestamp = to.millisecondsSinceEpoch;
+
+      // Query the call logs with specific number and time range
+      Iterable<CallLogEntry> entries = await CallLog.query(
+        dateFrom: fromTimestamp,
+        dateTo: toTimestamp,
+        number: specificNumber,
+      );
+
+      // Print call log details for the specific number within the time range
+      for (var entry in entries) {
+        totalCallDuration += entry.duration!;
+        totalCallCount + 1;
+        print('entiryCount 1');
+    //    print('Number: ${entry.number}, Date: ${DateTime.fromMillisecondsSinceEpoch(entry.timestamp ?? 0)}, Duration: ${entry.duration}');
+      }
+
+      print('toalCallDuration $totalCallDuration');
+      print('selectedMobileNumber $specificNumber');
+      print('totalCallCount $totalCallCount');
+
+
+    }
   }
 
 
@@ -237,6 +275,14 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
 
     _internetConnectionStatus();
 
+    // Define specific number and time range
+    String specificNumber = '8755090585'; // Replace with the number you want to filter
+    DateTime from = DateTime(2024, 7, 19, 18, 55); // 2024-07-19 20:30
+    DateTime to = DateTime.now(); // Current time
+
+    _fetchCallLogs(specificNumber, from, to);
+
+
     if (widget.userInfo != null) {
       userDetailsAvaible = true;
       _userInfo = widget.userInfo;
@@ -247,7 +293,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     ));
 
     // #docregion platform_features
-
 
     _checkInitialConnectivity();
     setupInteractedMessage();
@@ -308,7 +353,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     }
   }
 
-
   Future<void> _launchUrl(String _url) async {
     if (!await launchUrl(Uri.parse(_url))) {
       throw Exception('Could not launch $_url');
@@ -320,7 +364,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
 
     if (isConnected) _webViewController.reload();
 
-
     if (isConnected) {
       IsInternetConnected = isConnected;
     }
@@ -330,18 +373,17 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     });
   }
 
-
   bool canPop = false;
   bool _isLoading = false;
 
   late double _statusBarHeight;
 
+
+
   @override
   Widget build(BuildContext context) {
-    _statusBarHeight = MediaQuery
-        .of(context)
-        .padding
-        .top;
+    _statusBarHeight = MediaQuery.of(context).padding.top;
+
     return PopScope(
       canPop: canPop,
       onPopInvoked: (didPop) async {
@@ -350,140 +392,144 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         }
       },
       child: Scaffold(
-          key: _scaffoldKey,
-          body: IsInternetConnected == false ? Center(
-            child: NoInternetConnectionPage(
-              tryAgain: _checkInitialConnectivity,
-            ),
-          ) : Stack(
+        key: _scaffoldKey,
+        body: IsInternetConnected == false
+            ? Center(
+                child: NoInternetConnectionPage(
+                  tryAgain: _checkInitialConnectivity,
+                ),
+              )
+            : Stack(
+                children: [
+                  Container(
+                    color: Colors.white,
+                    margin: EdgeInsets.only(top: _statusBarHeight),
+                    child: BlocConsumer<GPSBloc, GPSState>(
+                      listener: (context, state) {
+                        print('gpsState : xy');
+                        if (state is GPSStatusUpdated) {
+                          print('gpsState 1: ${state.isGPSEnabled}');
+                          print('gpsState 2: ${state.isPermissionGranted}');
 
-            children: [
-
-
-            Container(
-            color: Colors.white,
-            margin: EdgeInsets.only(top: _statusBarHeight),
-            child: WebViewWidget(
-              controller: _webViewController
-              //  ..loadRequest(Uri.parse(deepLinkingURL))
-                ..enableZoom(false)
-              // ..setOnConsoleMessage((JavaScriptConsoleMessage message) {
-              //   print("ddd [${message.level.name}] ${message.message}");
-              // })
-                ..setJavaScriptMode(JavaScriptMode.unrestricted)
-                ..setBackgroundColor(const Color(0x00000000))
-                ..setNavigationDelegate(
-                  NavigationDelegate(
-                    onProgress: (int progress) {
-                      print('progress $progress');
-                    },
-                    onPageStarted: (String url) {
-                      setState(() {
-                        if (url == Config.HOME_URL) {
-                          _tabController.index = 1;
-                        } else if (url.contains('leads') && !url.contains(
-                            'bulk')) {
-                          _tabController.index = 0;
-                          setState(() {
-                            print('leadGetCall');
-                            tabbarvisibility = true;
-                          });
-                        } else if (url.contains('bulk-leads')) {
-                          _tabController.index = 2;
-                        } else if (url.contains('dialer')) {
-                          _tabController.index = 3;
-                        } else if (url.contains('bucket')) {
-                          _tabController.index = 4;
-                        } else if (url.contains('login')) {
-                          setState(() {
-                            print('logingetCall');
-                            tabbarvisibility = false;
-                          });
-                        } else {
-
+                          if (!state.isGPSEnabled || !state.isPermissionGranted) {
+                            _showGPSDialog(context);
+                          } else {
+                            _dismissGPSDialog(context);
+                          }
                         }
-                      });
-                      print('onPageStarted $url');
-                    },
-                    onPageFinished: (String url) {
-                      print('onPageFinished $url');
-                    },
-                    onWebResourceError: (WebResourceError error) {
-                      print('onWebResourceError ${error.errorCode} ${error
-                          .description}');
+                      },
+                      builder: (context, state) {
+                          return WebViewWidget(
+                            controller: _webViewController
+                            //  ..loadRequest(Uri.parse(deepLinkingURL))
+                              ..enableZoom(false)
+                            ..setOnConsoleMessage((JavaScriptConsoleMessage message) {
+                              print("ddd [${message.level.name}] ${message.message}");
+                            })
+                              ..setJavaScriptMode(JavaScriptMode.unrestricted)
+                              ..setBackgroundColor(const Color(0x00000000))
+                              ..setNavigationDelegate(
+                                NavigationDelegate(
+                                  onProgress: (int progress) {
+                                    print('progress $progress');
+                                  },
+                                  onPageStarted: (String url) {
+                                    setState(() {
+                                      if (url == Config.HOME_URL) {
+                                        _tabController.index = 1;
+                                      } else if (url.contains('leads') &&
+                                          !url.contains('bulk')) {
+                                        _tabController.index = 0;
+                                        setState(() {
+                                          print('leadGetCall');
+                                          tabbarvisibility = true;
+                                        });
+                                      } else if (url.contains('bulk-leads')) {
+                                        _tabController.index = 2;
+                                      } else if (url.contains('dialer')) {
+                                        _tabController.index = 3;
+                                      } else if (url.contains('bucket')) {
+                                        _tabController.index = 4;
+                                      } else if (url.contains('login')) {
+                                        setState(() {
+                                          print('logingetCall');
+                                          tabbarvisibility = false;
+                                        });
+                                      } else {}
+                                    });
+                                    print('onPageStarted $url');
+                                  },
+                                  onPageFinished: (String url) {
+                                    print('onPageFinished $url');
+                                  },
+                                  onWebResourceError: (WebResourceError error) {
+                                    print('onWebResourceError ${error
+                                            .errorCode} ${error.description}');
 
-                      if (error.errorCode == -10) {
-                        //  _webViewController.goBack();
-                      }
+                                    if (error.errorCode == -10) {
+                                    }
+                                  },
+                                  onHttpError: (HttpResponseError error) {
+                                    print('httpResponseError $error');
+                                  },
+                                  onNavigationRequest:
+                                      (NavigationRequest request) {
+                                    final url = request.url;
 
-                      /* print('onWebResourceError ${error.errorType} ${error.errorCode} ${error.description}');
+                                    if (url
+                                        .contains("https://api.whatsapp.com")) {
+                                      _launchUrl(url);
+                                      return NavigationDecision.prevent;
+                                    } else if (url.contains("tel:")) {
+                                      _launchUrl(url);
+                                      return NavigationDecision.prevent;
+                                    }
 
-                                            if (error.errorCode == -2) {
-                                            } else if (error.errorCode == -8) {
-                                            }else if(error.errorCode == -1001) {
-                                            }else if(error.errorCode == -999) {
-                                            }
-                                          */
-                    },
-                    onHttpError: (HttpResponseError error) {
-                      print('httpResponseError $error');
-                    },
-                    onNavigationRequest: (NavigationRequest request) {
-                      final url = request.url;
+                                    // Handle mailto links
+                                    if (url.startsWith('mailto:')) {
+                                      _launchUrl(url);
+                                      return NavigationDecision.prevent;
+                                    }
 
-                      if (url.contains("https://api.whatsapp.com")) {
-                        _launchUrl(url);
-                        return NavigationDecision.prevent;
-                      } else if (url.contains("tel:")) {
-                        _launchUrl(url);
-                        return NavigationDecision.prevent;
-                      }
+                                    // Handle social media and store links
+                                    final socialMediaPrefixes = [
+                                      'https://play.google.com',
+                                      'https://apps.apple.com',
+                                      'https://www.facebook.com',
+                                      'https://twitter.com',
+                                      'https://www.instagram.com',
+                                      'https://www.linkedin.com',
+                                      'https://www.youtube.com',
+                                      'https://www.tiktok.com',
+                                    ];
 
-                      // Handle mailto links
-                      if (url.startsWith('mailto:')) {
-                        _launchUrl(url);
-                        return NavigationDecision.prevent;
-                      }
+                                    for (var prefix in socialMediaPrefixes) {
+                                      if (url.startsWith(prefix)) {
+                                        _launchUrl(url);
+                                        return NavigationDecision.prevent;
+                                      }
+                                    }
 
-                      // Handle social media and store links
-                      final socialMediaPrefixes = [
-                        'https://play.google.com',
-                        'https://apps.apple.com',
-                        'https://www.facebook.com',
-                        'https://twitter.com',
-                        'https://www.instagram.com',
-                        'https://www.linkedin.com',
-                        'https://www.youtube.com',
-                        'https://www.tiktok.com',
-                      ];
-
-                      for (var prefix in socialMediaPrefixes) {
-                        if (url.startsWith(prefix)) {
-                          _launchUrl(url);
-                          return NavigationDecision.prevent;
-                        }
-                      }
-
-                      return NavigationDecision.navigate;
-                    },
+                                    return NavigationDecision.navigate;
+                                  },
+                                ),
+                              ),
+                          );
+                      },
+                    ),
                   ),
-                ),
-            ),
-          ),
+                  if (_isLoading) ...[
+                    ModalBarrier(
+                      dismissible: false,
+                      color: Colors.black.withOpacity(0.3),
+                    ),
+                    Center(
+                        child: CircularProgressIndicator(
+                      color: Color(0xFF0054a0),
+                    )),
+                  ],
 
-
-
-              if (_isLoading) ...[
-                ModalBarrier(
-                  dismissible: false,
-                  color: Colors.black.withOpacity(0.3),
-                ),
-                Center(
-                  child: CircularProgressIndicator(color: Color(0xFF0054a0),)
-                ),
-              ],
-
-             /* if (_isLoading) ...[
+                  /* if (_isLoading) ...[
                 ModalBarrier(
                   dismissible: false,
                   color: Colors.black.withOpacity(0.3),
@@ -502,14 +548,9 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
                   ),
                 ),
               ],*/
-
-
-
-    ],
-
-    )
-    ,
-    /* bottomNavigationBar: Container(
+                ],
+              ),
+        /* bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border(
@@ -566,30 +607,31 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
             ),
           ),
         ),*/
-    )
-    ,
+      ),
     );
   }
 
-  void javaScriptCall(WebViewController webViewController,
-      BuildContext context) {
+
+
+  void javaScriptCall(
+      WebViewController webViewController, BuildContext context) {
     webViewController.removeJavaScriptChannel('FlutterChannel');
     webViewController.addJavaScriptChannel('FlutterChannel',
         onMessageReceived: (message) async {
-          print('FlutterChannelDetails ${message.message}');
-          try {
-            var data = jsonDecode(message.message);
-            if (data is Map<String, dynamic>) {
-              _handleJsonMessageUserInfo(data);
-            } else {
-              print('ReceivedNonJsonMessage: ${message.message}');
-            }
-          } catch (e) {
-            // Handle as a plain string message
-            print('ReceivedStringMessage: ${message.message}');
-            _handleStringMessage(message.message, webViewController);
-          }
-        });
+      print('FlutterChannelDetails ${message.message}');
+      try {
+        var data = jsonDecode(message.message);
+        if (data is Map<String, dynamic>) {
+          _handleJsonMessageUserInfo(data);
+        } else {
+          print('ReceivedNonJsonMessage: ${message.message}');
+        }
+      } catch (e) {
+        // Handle as a plain string message
+        print('ReceivedStringMessage: ${message.message}');
+        _handleStringMessage(message.message, webViewController);
+      }
+    });
   }
 
   Future<void> _handleJsonMessageUserInfo(Map<String, dynamic> data) async {
@@ -609,8 +651,9 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         //  print('profileRespons ${profileResponse!.toJson()}');
       } else if (data['action'] == 'BottomViewVisibility') {
         final dynamic boolValue = data['visibility'];
-        final parsedValue = boolValue is bool ? boolValue : boolValue.toString()
-            .toLowerCase() == 'true';
+        final parsedValue = boolValue is bool
+            ? boolValue
+            : boolValue.toString().toLowerCase() == 'true';
 
         setState(() {
           tabbarvisibility = parsedValue;
@@ -634,8 +677,8 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     Share.share('$text\n$url');
   }
 
-  Future<void> _handleStringMessage(String message,
-      WebViewController webViewController) async {
+  Future<void> _handleStringMessage(
+      String message, WebViewController webViewController) async {
     if (message == "getBottomToolbar") {
       final packageInfo = await PackageInfo.fromPlatform();
       final versionNumber = packageInfo.version;
@@ -655,11 +698,13 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     }
     /* else if (message == "GetLocation") {
       setLatLongToWeb(webViewController, context,false);
-    }*/ else if (message == "TrackCall") {
+    }*/
+    else if (message == "TrackCall") {
       setLatLongToWeb(webViewController, context, 2);
     } else if (message == "agentClockOut" || message == "agentClockIn") {
       setLatLongToWeb(webViewController, context, 1);
     } else if (message == "getActivityCoordinate") {
+      print('getActivityCoordinate');
       setLatLongToWeb(webViewController, context, 0);
     } else if (message == "showMap") {
       _hideSystemUI();
@@ -668,42 +713,38 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     }
   }
 
-
   Future<void> sentDeviceInfoToWeb(WebViewController webViewController) async {
     print("getCallSystem");
     try {
       final packageInfo = await PackageInfo.fromPlatform();
 
-      if (Theme
-          .of(context)
-          .platform == TargetPlatform.android) {
+      if (Theme.of(context).platform == TargetPlatform.android) {
         androidInfo = await deviceInfo.androidInfo;
-      } else if (Theme
-          .of(context)
-          .platform == TargetPlatform.iOS) {
+      } else if (Theme.of(context).platform == TargetPlatform.iOS) {
         iosInfo = await deviceInfo.iosInfo;
       }
 
       if (androidInfo != null) {
-        print("androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!.model} ,${androidInfo!.version.release}");
+        print(
+            "androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!.model} ,${androidInfo!.version.release}");
       } else if (iosInfo != null) {
-        print("IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!.model} ,${iosInfo!.systemVersion} ");
+        print(
+            "IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!.model} ,${iosInfo!.systemVersion} ");
       }
-
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? fcmToken = prefs.getString('fcmToken');
-      //  print('fcmToken : $fcmToken');
+       print('fcmToken : $fcmToken');
       //  webViewController.runJavaScript('setToken("$fcmToken")');
 
-      String jsCode = '{"DeviceInfo": "${androidInfo!.manufacturer} ${androidInfo!.model} ${androidInfo!.version.release} ", "AppVersion": "VersionCode: ${packageInfo.buildNumber} VersionName: ${packageInfo.version}", "AppVersionName": "${packageInfo.version}", "FirebaseFCM": "$fcmToken"}';
+      String jsCode =
+          '{"DeviceInfo": "${androidInfo!.manufacturer} ${androidInfo!.model} ${androidInfo!.version.release} ", "AppVersion": "VersionCode: ${packageInfo.buildNumber} VersionName: ${packageInfo.version}", "AppVersionName": "${packageInfo.version}", "FirebaseFCM": "$fcmToken"}';
       print("jsCode $jsCode");
       webViewController.runJavaScript('setDeviceInfo(`$jsCode`)');
     } catch (e) {
       print('Failed to get device info: $e');
     }
   }
-
 
   Future<void> setLatLongToWeb(WebViewController webViewController,
       BuildContext context, int coordinateType) async {
@@ -726,28 +767,27 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       if (permission == LocationPermission.deniedForever) {
         showDialog(
           context: context,
-          builder: (context) =>
-              AlertDialog(
-                title: Text('Location Permission Required'),
-                content: Text(
-                    'Please enable location permissions in your device settings to use this feature.'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text('Cancel'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      // Open the app settings
-                      Navigator.pop(context);
-                      ph.openAppSettings();
-                    },
-                    child: Text('Settings'),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: Text('Location Permission Required'),
+            content: Text(
+                'Please enable location permissions in your device settings to use this feature.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text('Cancel'),
               ),
+              TextButton(
+                onPressed: () {
+                  // Open the app settings
+                  Navigator.pop(context);
+                  ph.openAppSettings();
+                },
+                child: Text('Settings'),
+              ),
+            ],
+          ),
         );
         return;
       } else if (permission != LocationPermission.whileInUse &&
@@ -756,20 +796,18 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       }
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    // setState(() {
+    //   _isLoading = true;
+    // });
 
     Position? position = await Geolocator.getLastKnownPosition();
 
     position ??= await geolocator.Geolocator.getCurrentPosition(
-        desiredAccuracy: geolocator.LocationAccuracy.high
-    );
+        desiredAccuracy: geolocator.LocationAccuracy.high);
 
-
-    setState(() {
-      _isLoading = false;
-    });
+    // setState(() {
+    //   _isLoading = false;
+    // });
 
     if (coordinateType == 0) {
       print('Coordinate0: ${position.latitude}, ${position.longitude}');
@@ -797,7 +835,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         webViewController.runJavaScript('setLatlng(`$cordinate`)');
 
     }*/
-
   }
 
   Future<void> _exitApp(BuildContext context) async {
@@ -822,7 +859,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
 
   //Show options to get image from camera or gallery
   Future showOptions() async {
-
     var permissionStatus = await ph.Permission.camera.request();
 
     if (permissionStatus.isGranted) {
@@ -896,20 +932,18 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   Future getImageFromGallery() async {
     await picker
         .pickImage(source: ImageSource.gallery, imageQuality: 25)
-        .then((value) =>
-    {
-      if (value != null) {cropImageCall(File(value.path))}
-    });
+        .then((value) => {
+              if (value != null) {cropImageCall(File(value.path))}
+            });
   }
 
   //Image Picker function to get image from camera
   Future getImageFromCamera() async {
     await picker
         .pickImage(source: ImageSource.camera, imageQuality: 25)
-        .then((value) async =>
-    {
-      if (value != null) {cropImageCall(File(value.path))}
-    });
+        .then((value) async => {
+              if (value != null) {cropImageCall(File(value.path))}
+            });
   }
 
   cropImageCall(File imgFile) async {
@@ -926,14 +960,13 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
       _isLoading = true;
     });
 
-
     String barearToken = await getPrefStringValue(Config.BarearToken);
     final dio = Dio();
     const url = Config.IMAGE_UPLOAD;
 
     // Generate the current date and time in the desired format
-    String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(
-        DateTime.now());
+    String formattedDate =
+        DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
     String noSpacesStr = formattedDate.replaceAll(' ', '_');
     String name = 'properties_$noSpacesStr.png';
 
@@ -942,20 +975,23 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
     });
 
     try {
-      final response = await dio.post(
-          url, data: formData, options: Options(headers: {
-        'Authorization': 'Bearer $barearToken', // Replace with your token
-        'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'Content-Type': 'application/json',
-        'Accept': 'application/json, text/plain, */*',
-        'Referer': 'https://sync.savemax.com/',
-        'platform': 'web',
-        'sec-ch-ua':
-        '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"'
-      },));
+      final response = await dio.post(url,
+          data: formData,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $barearToken', // Replace with your token
+              'User-Agent':
+                  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+              'Content-Type': 'application/json',
+              'Accept': 'application/json, text/plain, */*',
+              'Referer': 'https://sync.savemax.com/',
+              'platform': 'web',
+              'sec-ch-ua':
+                  '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+              'sec-ch-ua-mobile': '?0',
+              'sec-ch-ua-platform': '"Windows"'
+            },
+          ));
       var responseData = jsonEncode(response.data);
 
       setState(() {
@@ -977,23 +1013,94 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   void showPermissionSettingsDialog(BuildContext context, String msg) {
     showDialog(
       context: context,
-      builder: (context) =>
-          AlertDialog(
-            title: Text('Permission Required'),
-            content: Text('$msg'),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  Navigator.pop(context);
-                  await ph.openAppSettings();
-                },
-                child: Text('Open Settings'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: Text('Permission Required'),
+        content: Text('$msg'),
+        actions: [
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await ph.openAppSettings();
+            },
+            child: Text('Open Settings'),
           ),
+        ],
+      ),
     );
   }
 }
+
+
+AlertDialog? _gpsDialog;
+
+void _showGPSDialog(BuildContext context) {
+  if (_gpsDialog == null) {
+    _gpsDialog = AlertDialog(
+      title: Center(child: Text('Location Required')),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Lottie.asset('assets/lottie/lotti_gps.json', width: 150, height: 150),
+          SizedBox(height: 10),
+          Center(
+            child: Text(
+              'Enable device location to use the CRM app.',
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        Container(
+          margin: EdgeInsets.only(right: 16,left: 16,top: 10,bottom: 8), // Equivalent to @dimen/_16sdp
+          child: SocalButton(
+            color: Color(0xFF0054a0),
+            icon: Icon(Icons.location_off, color: Colors.white, size: 16),
+            press: () async {
+              Location location = Location();
+              bool serviceEnabled = await location.serviceEnabled();
+              if (!serviceEnabled) {
+                serviceEnabled = await location.requestService();
+                if (!serviceEnabled) {
+                  return;
+                }
+              }
+
+              LocationPermission permission = await Geolocator.checkPermission();
+              if (permission == LocationPermission.denied) {
+                permission = await Geolocator.requestPermission();
+
+                if (permission == LocationPermission.deniedForever) {
+                  ph.openAppSettings();
+                  return;
+                } else if (permission != LocationPermission.whileInUse &&
+                    permission != LocationPermission.always) {
+                  return;
+                }
+              }
+            },
+            text: "Enable GPS".toUpperCase(),
+          ),
+        ),
+      ],
+    );
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) => _gpsDialog!,
+    );
+  }
+}
+
+
+void _dismissGPSDialog(BuildContext context) {
+  if (_gpsDialog != null) {
+    Navigator.of(context, rootNavigator: true).pop();
+    _gpsDialog = null;
+  }
+}
+
 
 // const String html = """
 // <html>
@@ -1044,7 +1151,6 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
 // </body>
 // </html>
 // """;
-
 
 //
 // String html = """<html>

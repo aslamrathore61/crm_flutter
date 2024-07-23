@@ -13,55 +13,40 @@ class ForceUpdateScreen extends StatelessWidget {
       body: Container(
         padding: EdgeInsets.all(16.0), // Equivalent to @dimen/activity_vertical_margin
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            Expanded(
-              flex: 1,
-              child: Container(
+           Container(
                 margin: EdgeInsets.symmetric(horizontal: 28.0, vertical: 28.0),
                 child: Column(
                   children: [
 
-                    SizedBox(height: 30,),
-                   /* Image.asset(
-                      width: 40,
-                      height: 40,
-                      'assets/icons/savemaxdoller.png', // Update this to your actual image path
-                      fit: BoxFit.contain,
-                    ),
-
-                    SizedBox(height: 6,),*/
 
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Save Max CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
+                        Text('Sync CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
                        // Text(' CRM',style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),),
                       ],
                     ),
 
                   ],
                 ),
-              ),
             ),
-           Expanded(
-             flex: 1,
-             child: Container(
+          Container(
                child: Lottie.asset(
                       'assets/lottie/force_update.json', // Update this to your actual Lottie file path
                       repeat: true,
                       animate: true,
                     ),
              ),
-           ),
 
-            Expanded(
-              flex: 1,
-              child: Column(
+
+            Column(
                 children: [
                   Container(
                     margin: EdgeInsets.only(top: 14.0), // Equivalent to @dimen/_14sdp
                     child: Text(
-                      'Update is available for Save Max CRM', // Update this to your actual string resource
+                      'Update Available!', // Update this to your actual string resource
                       style: TextStyle(
                         fontSize: 20.0, // Equivalent to @dimen/_20sdp
                         color: Color(0xFF000000), // Equivalent to @color/dark
@@ -74,7 +59,7 @@ class ForceUpdateScreen extends StatelessWidget {
                     margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0), // Equivalent to @dimen/_8sdp
                     padding: EdgeInsets.all(8.0), // Equivalent to @dimen/_8sdp
                     child: Text(
-                      'Newer, Better & Faster! Update now for improved performance, enhanced security, and exciting new features with the latest app version.', // Update this to your actual string resource
+                      'A new version of the application is available. For the best app experience, please update to the latest version.', // Update this to your actual string resource
                       style: TextStyle(
                         fontSize: 16.0, // Equivalent to @dimen/_16sdp
                         color: Color(0xFF000000), // Equivalent to @color/dark
@@ -84,7 +69,6 @@ class ForceUpdateScreen extends StatelessWidget {
                   ),
 
                 ],
-              ),
             ),
 
             Container(
@@ -96,7 +80,7 @@ class ForceUpdateScreen extends StatelessWidget {
                   press: () {
                     launchAppStore(context);
                   },
-                  text: "UPDATE NOW".toUpperCase(),
+                  text: "Update Now",
                 ),
               ),
           ],
