@@ -1079,7 +1079,7 @@ void _showGPSDialog(BuildContext context) {
                 }
               }
             },
-            text: "Enable GPS".toUpperCase(),
+            text: "Enable Location",
           ),
         ),
       ],
