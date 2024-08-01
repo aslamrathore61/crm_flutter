@@ -6,6 +6,10 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+    <string>Need location permission for area project listing</string>
+    <key>NSLocationUsageDescription</key>
+    <string>We need your location to provide personalized content based on your current location.</string>
 	<key>CFBundleDisplayName</key>
 	<string>Crm Flutter</string>
 	<key>CFBundleExecutable</key>

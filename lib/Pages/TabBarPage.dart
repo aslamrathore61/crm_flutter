@@ -716,6 +716,7 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
   Future<void> sentDeviceInfoToWeb(WebViewController webViewController) async {
     print("getCallSystem");
     try {
+
       final packageInfo = await PackageInfo.fromPlatform();
 
       if (Theme.of(context).platform == TargetPlatform.android) {
@@ -724,27 +725,27 @@ class _TabBarPageState extends State<TabBarPage> with TickerProviderStateMixin {
         iosInfo = await deviceInfo.iosInfo;
       }
 
-      if (androidInfo != null) {
-        print(
-            "androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!.model} ,${androidInfo!.version.release}");
-      } else if (iosInfo != null) {
-        print(
-            "IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!.model} ,${iosInfo!.systemVersion} ");
-      }
-
+      String jsCode = "";
       SharedPreferences prefs = await SharedPreferences.getInstance();
       String? fcmToken = prefs.getString('fcmToken');
-       print('fcmToken : $fcmToken');
-      //  webViewController.runJavaScript('setToken("$fcmToken")');
 
-      String jsCode =
-          '{"DeviceInfo": "${androidInfo!.manufacturer} ${androidInfo!.model} ${androidInfo!.version.release} ", "AppVersion": "VersionCode: ${packageInfo.buildNumber} VersionName: ${packageInfo.version}", "AppVersionName": "${packageInfo.version}", "FirebaseFCM": "$fcmToken"}';
+      if(androidInfo != null) {
+        print("androidDeviceInfo : ${androidInfo!.manufacturer}, ${androidInfo!.model} ,${androidInfo!.version.release}");
+        jsCode = '{"DeviceInfo": "${androidInfo!.manufacturer} ${androidInfo!.model} ${androidInfo!.version.release} ", "AppVersion": "${packageInfo.buildNumber}", "FirebaseFCM": "$fcmToken"}';
+      }else if(iosInfo != null) {
+        print("IOSDeviceInfo : ${iosInfo!.systemName}, ${iosInfo!.model} ,${iosInfo!.systemVersion} ");
+        jsCode = '{"DeviceInfo": "${iosInfo!.systemName} ${iosInfo!.model} ${iosInfo!.systemVersion} ", "AppVersion": "${packageInfo.buildNumber}", "FirebaseFCM": "$fcmToken"}';
+      }
+
       print("jsCode $jsCode");
       webViewController.runJavaScript('setDeviceInfo(`$jsCode`)');
+
+
     } catch (e) {
       print('Failed to get device info: $e');
     }
   }
+
 
   Future<void> setLatLongToWeb(WebViewController webViewController,
       BuildContext context, int coordinateType) async {
