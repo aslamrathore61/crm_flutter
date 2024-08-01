@@ -33,6 +33,8 @@ dependencies:
     sdk: flutter
 
   webview_flutter: ^4.7.0
+  flutter_inappwebview: ^6.0.0
+  flutter_downloader: ^1.11.8
   screenshot: ^2.3.0
 #  share_plus: ^9.0.0
 #  connectivity_plus: ^5.0.2

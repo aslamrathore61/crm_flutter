@@ -1,7 +1,8 @@
 class Config {
 
   // static const String HOST = "syncmob.savemax.com";
-  // static const String HOME_URL = "http://192.168.1.2:3000";
+  // static const String HOME_URL = "http://172.17.10.161:3000/";
+  // static const String HOME_URL = "http://172.17.10.161:3000/leads";
 
   // uat
   static const String HOME_URL = "https://syncmb-uat.savemax.com/";

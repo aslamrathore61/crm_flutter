@@ -12,6 +12,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'Component/UpdateMaintainance/ForceUpdateScreen.dart';
 import 'Component/UpdateMaintainance/MaintenanceScreen.dart';
 import 'Network/ApiProvider.dart';
+import 'Pages/InAppWebView.dart';
 import 'Pages/SplashScreen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive/hive.dart';
@@ -21,6 +22,9 @@ import 'model/native_item.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'model/user_info.dart';
+
+
+late final String WEB_ARCHIVE_DIR;
 
 FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
 AndroidNotificationChannel? channel;
@@ -55,17 +59,17 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  FirebaseMessaging messaging = FirebaseMessaging.instance;
-
-  await messaging.requestPermission(
-    alert: true,
-    announcement: false,
-    badge: true,
-    carPlay: false,
-    criticalAlert: false,
-    provisional: false,
-    sound: true,
-  );
+  // FirebaseMessaging messaging = FirebaseMessaging.instance;
+  //
+  // await messaging.requestPermission(
+  //   alert: true,
+  //   announcement: false,
+  //   badge: true,
+  //   carPlay: false,
+  //   criticalAlert: false,
+  //   provisional: false,
+  //   sound: true,
+  // );
 
   Future<void> initializeHive() async {
     await Hive.initFlutter();
@@ -74,38 +78,38 @@ Future<void> main() async {
     Hive.registerAdapter(UserInfoAdapter());
   }
 
-  final fcmToken = await messaging.getToken();
-  SharedPreferences prefs = await SharedPreferences.getInstance();
-  print('fcmToakenValue ${fcmToken}');
-  await prefs.setString('fcmToken', '$fcmToken');
-
-  channel = const AndroidNotificationChannel(
-      'flutter_notification', // id
-      'flutter_notification_title', // title
-      importance: Importance.high,
-      enableLights: true,
-      enableVibration: true,
-      showBadge: true,
-      playSound: true);
-
-
-  flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-
-  await messaging
-      .setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
-  );
+  // final fcmToken = await messaging.getToken();
+  // SharedPreferences prefs = await SharedPreferences.getInstance();
+  // print('fcmToakenValue ${fcmToken}');
+  // await prefs.setString('fcmToken', '$fcmToken');
+  //
+  // channel = const AndroidNotificationChannel(
+  //     'flutter_notification', // id
+  //     'flutter_notification_title', // title
+  //     importance: Importance.high,
+  //     enableLights: true,
+  //     enableVibration: true,
+  //     showBadge: true,
+  //     playSound: true);
+  //
+  //
+  // flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  //
+  // await messaging
+  //     .setForegroundNotificationPresentationOptions(
+  //   alert: true,
+  //   badge: true,
+  //   sound: true,
+  // );
 
   await initializeHive();
 
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+ // FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-
+print('justOne 1');
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     themeMode: ThemeMode.light, // Always use light theme
@@ -123,7 +127,7 @@ Future<void> main() async {
         final NativeItem nativeItem = args['nativeItem'];
         return BlocProvider(
           create: (context) => GPSBloc()..add(CheckGPS()),
-            child: TabBarPage(nativeItem: nativeItem, userInfo: userInfo,));
+            child: WebViewTab(nativeItem: nativeItem, userInfo: userInfo,));
       },
       '/forceUpdatePage': (context) {
         return ForceUpdateScreen();

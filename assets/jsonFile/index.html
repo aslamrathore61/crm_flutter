@@ -17,23 +17,29 @@
     </style>
     <script>
         function sendToFlutter() {
+
          if (window.NativeJavascriptInterface) {
         window.NativeJavascriptInterface.generateToken()
+                    console.log('androidCall')
+
     } else if (
         window.webkit &&
         window.webkit.messageHandlers.NativeJavascriptInterface
     ) {
         // Call iOS interface
+            console.log('iosCall')
+
         window.webkit.messageHandlers.NativeJavascriptInterface.postMessage(
             'callPostMessage'
         )
     }else if (window.FlutterChannel) {
+    console.log('flutterCall')
          // Call Flutter code
          window.FlutterChannel.postMessage("GenerateFCMToken");
 
     } else {
         // No Android or iOS, Flutter interface found
-        console.log('No native APIs found.')
+        console.log('NoNative APIs found.')
         window.setToken(null)
     }
         }
