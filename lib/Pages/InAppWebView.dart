@@ -1,15 +1,17 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:crm_flutter/Config.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,13 +24,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:webview_flutter/webview_flutter.dart';
 import '../Component/buttons/socal_button.dart';
 import '../InAppWebViewUtil.dart';
 import '../SharePrefFile.dart';
 import '../Utils.dart';
 import '../bloc/gpsBloc/gps_bloc.dart';
 import '../bloc/gpsBloc/gps_state.dart';
+import '../main.dart';
 import '../model/native_item.dart';
 import '../model/user_info.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
@@ -57,6 +59,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   AlertDialog? _gpsDialog;
   UserInfo? _userInfo;
   bool userDetailsAvaible = false;
+  late String deepLinkingURL;
 
   final TextEditingController _httpAuthUsernameController =
   TextEditingController();
@@ -64,6 +67,90 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   TextEditingController();
 
 
+
+  Future<void> setupInteractedMessage() async {
+    // To handle messages while your application is in the foreground, listen to the onMessage stream
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      RemoteNotification? notification = message.notification;
+      AndroidNotification? android = message.notification?.android;
+
+      if (notification != null && android != null && !kIsWeb) {
+        String action = jsonEncode(message.data);
+        print('action ${action}');
+
+        flutterLocalNotificationsPlugin!.show(
+            notification.hashCode,
+            notification.title,
+            notification.body,
+            NotificationDetails(
+              android: AndroidNotificationDetails(
+                channel!.id,
+                channel!.name,
+                priority: Priority.high,
+                importance: Importance.high,
+                styleInformation: DefaultStyleInformation(true, true),
+                largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+                channelShowBadge: true,
+                autoCancel: true,
+                icon: '@mipmap/ic_launcher',
+              ),
+            ),
+            payload: action);
+      }
+      print('A new event was published!');
+    });
+
+    // Get any messages which caused the application to open from
+    // a terminated state.
+    RemoteMessage? initialMessage =
+    await FirebaseMessaging.instance.getInitialMessage();
+
+    // If the message also contains a data property with a "type" of "chat",
+    // navigate to a chat screen
+    if (initialMessage != null) {
+      _handleMessage(initialMessage);
+    }
+    /*else {
+      handleDeepLink(null);
+    }*/
+
+    // Also handle any interaction when the app is in the background via a
+    // Stream listener
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleMessage);
+
+    final android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    final iOS = DarwinInitializationSettings();
+    final initSettings = InitializationSettings(android: android, iOS: iOS);
+
+    await flutterLocalNotificationsPlugin!.initialize(initSettings,
+        onDidReceiveNotificationResponse: notificationTapForeGround,
+        onDidReceiveBackgroundNotificationResponse: notificationTapForeGround);
+  }
+
+  void notificationTapForeGround(NotificationResponse notificationResponse) {
+    final String? payloadString = notificationResponse.payload;
+    if (payloadString != null) {
+      final Map<String, dynamic> payloadMap = jsonDecode(payloadString);
+      final String? url = payloadMap['url'];
+      handleDeepLink(url);
+    }
+  }
+
+  void _handleMessage(RemoteMessage message) {
+    handleDeepLink(message.data['url']);
+  }
+
+  void handleDeepLink(String? redirectLink) {
+    if (redirectLink != null && redirectLink.isNotEmpty) {
+      Uri uri = Uri.parse(redirectLink);
+      String segmentPath = uri.path + '?' + uri.query;
+      deepLinkingURL = Config.HOME_URL + segmentPath;
+    } else {
+      deepLinkingURL = Config.HOME_URL;
+    }
+
+   _webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(deepLinkingURL)));
+  }
 
 
   @override
@@ -77,30 +164,14 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     ));
 
     _internetConnectionStatus();
-
+    setupInteractedMessage();
     _findInteractionController = FindInteractionController();
 
     if (widget.userInfo != null) {
       userDetailsAvaible = true;
       _userInfo = widget.userInfo;
     }
-
-
   }
-
-
-  void _hideSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.manual,
-      overlays: [SystemUiOverlay.bottom],
-    );
-  }
-
-  void _showSystemUI() {
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: SystemUiOverlay.values);
-  }
-
 
 
   void _internetConnectionStatus() {
@@ -252,12 +323,18 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   InAppWebView _buildWebView() {
 
     if (Util.isAndroid()) {
-      InAppWebViewController.setWebContentsDebuggingEnabled(true);}
+      InAppWebViewController.setWebContentsDebuggingEnabled(true);
+    }
 
     var initialSettings = InAppWebViewSettings();
+    initialSettings.mixedContentMode = MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW;
     initialSettings.isInspectable = true;
     initialSettings.useOnDownloadStart = true;
     initialSettings.useOnLoadResource = true;
+    initialSettings.builtInZoomControls = false;
+  //  initialSettings.displayZoomControls = false;
+    initialSettings.supportZoom = false;
+    initialSettings.textZoom = 100;
     initialSettings.useShouldOverrideUrlLoading = true;
     initialSettings.javaScriptCanOpenWindowsAutomatically = true;
     initialSettings.userAgent =
@@ -278,8 +355,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     //initialSettings.allowingReadAccessTo = WebUri('file://$WEB_ARCHIVE_DIR/');
 
     return InAppWebView(
-      keepAlive: InAppWebViewKeepAlive(),
-    initialUrlRequest: URLRequest(url: WebUri(Config.HOME_URL)),
+    //  keepAlive: InAppWebViewKeepAlive(),
+   initialUrlRequest: URLRequest(url: WebUri(Config.HOME_URL)),
     initialSettings: initialSettings,
      // windowId: widget.webViewModel.windowId,
       findInteractionController: _findInteractionController,
@@ -287,7 +364,10 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         initialSettings.transparentBackground = false;
         await controller.setSettings(settings: initialSettings);
         _webViewController = controller;
-      //  _webViewController?.loadData(data: htmlContent, mimeType: 'text/html', encoding: 'utf-8');
+        _webViewController?.setSettings(
+            settings:InAppWebViewSettings(builtInZoomControls:false)
+        );
+      // _webViewController?.loadData(data: htmlContent, mimeType: 'text/html', encoding: 'utf-8');
         addJavaScriptHandlers(controller, context);
         if (Util.isAndroid()) {
           controller.startSafeBrowsing();
@@ -332,19 +412,33 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       shouldOverrideUrlLoading: (controller, navigationAction) async {
         var url = navigationAction.request.url;
         print('shouldOverrideUrl $url');
+
+        if (url != null && url.toString().startsWith('https://wa.me')) {
+          if (await canLaunchUrl(url)) {
+            print('Launching WhatsApp');
+            await launchUrl(url);
+            return NavigationActionPolicy.CANCEL;
+          }
+        }
+
         if (url != null && !["http", "https", "file", "chrome", "data", "javascript", "about"].contains(url.scheme)) {
           if (await canLaunchUrl(url)) {
+            print('thisOneGetCall 0');
+
             // Launch the App
             await launchUrl(
               url,
             );
             // and cancel the request
+            print('thisOneGetCall 1');
             return NavigationActionPolicy.CANCEL;
           }
         }
-
+        print('thisOneGetCall 2');
         return NavigationActionPolicy.ALLOW;
       },
+
+
       onDownloadStartRequest: (controller, url) async {
         String path = url.url.path;
         String fileName = path.substring(path.lastIndexOf('/') + 1);
@@ -359,6 +453,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
       onReceivedServerTrustAuthRequest: (controller, challenge) async {
         var sslError = challenge.protectionSpace.sslError;
+        print('checkServerTrust $sslError');
         if (sslError != null && (sslError.code != null)) {
           if (Util.isIOS() && sslError.code == SslErrorType.UNSPECIFIED) {
             return ServerTrustAuthResponse(
@@ -372,6 +467,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
             action: ServerTrustAuthResponseAction.PROCEED);
       },
       onReceivedError: (controller, request, error) async {
+        print("Received error: ${error.description}");
         var isForMainFrame = request.isForMainFrame ?? false;
         if (!isForMainFrame) {
           return;
