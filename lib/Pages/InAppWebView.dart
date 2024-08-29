@@ -375,6 +375,15 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
       },
       onLoadStart: (controller, url) async {
+
+        if (url != null && url.toString().startsWith('https://wa.me')) {
+          controller.stopLoading();
+          if (await canLaunchUrl(url)) {
+            print('Launching WhatsApp');
+            await launchUrl(url);
+          }
+        }
+
       print('onLoadStart $url');
       },
       onLoadStop: (controller, url) async {
