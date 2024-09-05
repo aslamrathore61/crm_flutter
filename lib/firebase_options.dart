@@ -63,6 +63,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '393281013850',
     projectId: 'save-max-crm',
     storageBucket: 'save-max-crm.appspot.com',
-    iosBundleId: 'com.savemax.crm.crmFlutter',
+    iosBundleId: 'com.savemax.crm',
   );
 }

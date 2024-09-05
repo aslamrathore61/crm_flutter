@@ -572,13 +572,22 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
 
     controller.addJavaScriptHandler(handlerName: 'openWhatsapp', callback: (args) async {
-      String whsappUrl = args[0];
-      if (await canLaunch(whsappUrl)) {
-        await launch(whsappUrl);
+      print('whatsappGetCall ${args[0]}');
+
+      String whatsappUrl = args[0]; // The full WhatsApp URL (e.g., https://wa.me?text=...)
+
+      // Since the URL is already in the wa.me format, we can directly launch it
+      if (whatsappUrl.contains('wa.me')) {
+        if (await canLaunch(whatsappUrl)) {
+          await launch(whatsappUrl, forceSafariVC: false, forceWebView: false); // Opens WhatsApp directly
+        } else {
+          throw 'Could not launch $whatsappUrl';
+        }
       } else {
-        throw 'Could not launch $whsappUrl';
-      };
+        throw 'Invalid WhatsApp URL format';
+      }
     });
+
 
     controller.addJavaScriptHandler(handlerName: 'openDialer', callback: (args) async {
       String phoneNumber = args[0];
