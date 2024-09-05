@@ -268,7 +268,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
+        resizeToAvoidBottomInset: Platform.isAndroid ? true : false,
         body: Container(
         //  margin: EdgeInsets.only(top: _statusBarHeight),
           color: Colors.white,
