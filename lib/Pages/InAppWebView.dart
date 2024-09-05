@@ -268,6 +268,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
+        resizeToAvoidBottomInset: false,
         body: Container(
         //  margin: EdgeInsets.only(top: _statusBarHeight),
           color: Colors.white,
@@ -414,14 +415,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         var url = navigationAction.request.url;
         print('shouldOverrideUrl $url');
 
-      /*  if (url != null && url.toString().startsWith('https://wa.me')) {
-          if (await canLaunchUrl(url)) {
-            print('Launching WhatsApp');
-            await launchUrl(url);
-            return NavigationActionPolicy.CANCEL;
-          }
-        }
-*/
         if (url != null && !["http", "https", "file", "chrome", "data", "javascript", "about"].contains(url.scheme)) {
           if (await canLaunchUrl(url)) {
             print('thisOneGetCall 0');
@@ -473,11 +466,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         if (!isForMainFrame) {
           return;
         }
-
-        // if (Util.isIOS() && error.type == WebResourceErrorType.CANCELLED) {
-        //   // NSURLErrorDomain
-        //   return;
-        // }
 
         var errorUrl = request.url;
 
