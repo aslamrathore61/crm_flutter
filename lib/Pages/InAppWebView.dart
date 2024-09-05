@@ -376,14 +376,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
       onLoadStart: (controller, url) async {
 
-        if (url != null && url.toString().startsWith('https://wa.me')) {
-          controller.stopLoading();
-          if (await canLaunchUrl(url)) {
-            print('Launching WhatsApp');
-            await launchUrl(url);
-          }
-        }
-
       print('onLoadStart $url');
       },
       onLoadStop: (controller, url) async {
@@ -422,14 +414,14 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         var url = navigationAction.request.url;
         print('shouldOverrideUrl $url');
 
-        if (url != null && url.toString().startsWith('https://wa.me')) {
+      /*  if (url != null && url.toString().startsWith('https://wa.me')) {
           if (await canLaunchUrl(url)) {
             print('Launching WhatsApp');
             await launchUrl(url);
             return NavigationActionPolicy.CANCEL;
           }
         }
-
+*/
         if (url != null && !["http", "https", "file", "chrome", "data", "javascript", "about"].contains(url.scheme)) {
           if (await canLaunchUrl(url)) {
             print('thisOneGetCall 0');
@@ -577,8 +569,44 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
      // return response;
 
     });
+
+
+    controller.addJavaScriptHandler(handlerName: 'openWhatsapp', callback: (args) async {
+      String whsappUrl = args[0];
+      if (await canLaunch(whsappUrl)) {
+        await launch(whsappUrl);
+      } else {
+        throw 'Could not launch $whsappUrl';
+      };
+    });
+
+    controller.addJavaScriptHandler(handlerName: 'openDialer', callback: (args) async {
+      String phoneNumber = args[0];
+      String url = 'tel:$phoneNumber';
+      if (await canLaunch(url)) {
+        await launch(url);
+      } else {
+        throw 'Could not launch $url';
+      };
+    });
+
+
+
+
+    controller.addJavaScriptHandler(handlerName: 'openShare', callback: (args) async {
+      String url = args[0];
+    //  _shareContent(url);
+
+    });
+
   }
 
+ /* Future<void> _shareContent(String url) async {
+
+    String branchLink = await generateBranchLink(url);
+
+    Share.share('$branchLink');
+  }*/
 
 
   Future<void> _handleJsonMessageUserInfo(Map<String, dynamic> data) async {
