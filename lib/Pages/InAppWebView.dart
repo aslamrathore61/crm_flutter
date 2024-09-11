@@ -466,8 +466,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         if (!isForMainFrame) {
           return;
         }
-
-        var errorUrl = request.url;
+        /*
 
         _webViewController?.loadData(data: """
 <!DOCTYPE html>
@@ -499,6 +498,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     </div>
 </body>
     """, baseUrl: errorUrl, historyUrl: errorUrl);
+*/
 
 
       },
@@ -690,9 +690,20 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   }
 
   Future<String> uploadImage(File imageFile) async {
-    setState(() {
-      _isLoading = true;
-    });
+
+    print('imageFIle ${imageFile.path}');
+
+
+    if(imageFile.path.isEmpty || imageFile.path == "null" || imageFile.path == null) {
+      setState(() {
+        _isLoading = false;
+      });
+    }else {
+      setState(() {
+        _isLoading = true;
+      });
+
+    }
 
     String barearToken = await getPrefStringValue(Config.BarearToken);
     final dio = Dio();
