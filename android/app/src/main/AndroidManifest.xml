@@ -21,7 +21,7 @@
     -->
 
     <application
-        android:label="Flutter Sync CRM"
+        android:label="Sync CRM"
         android:exported="true"
         android:launchMode="singleTop"
         android:icon="@mipmap/ic_launcher_secondary"

@@ -534,7 +534,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       final messageFromWeb = args[0];
 
       if (messageFromWeb == "agentClockOut" || messageFromWeb == "agentClockIn" || messageFromWeb == "TrackCall" || messageFromWeb == "getActivityCoordinate") {
-       return await setLatLongToWeb(context);
+       print("getcall call");
+        return await setLatLongToWeb(context);
       }else if (messageFromWeb == "CaptureSiteImage") {
         final responseValue = await showOptions(context);
         Map<String, dynamic> response = jsonDecode(responseValue);
@@ -935,10 +936,10 @@ Future<String> setLatLongToWeb(BuildContext context) async {
   }
 
   Position? position = await geolocator.Geolocator.getCurrentPosition(
-      desiredAccuracy: geolocator.LocationAccuracy.high);
+      desiredAccuracy: geolocator.LocationAccuracy.low);
 
   String coordinate = "${position.latitude},${position.longitude}";
-
+    print('cordinateCheck $coordinate');
   return coordinate;
 }
 
