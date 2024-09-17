@@ -163,9 +163,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       statusBarColor: Colors.blueAccent, // Change this to the desired color
     ));
 
-    _internetConnectionStatus();
-    setupInteractedMessage();
-    _findInteractionController = FindInteractionController();
+     _internetConnectionStatus();
+      setupInteractedMessage();
+     _findInteractionController = FindInteractionController();
 
     if (widget.userInfo != null) {
       userDetailsAvaible = true;
@@ -333,7 +333,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     initialSettings.useOnDownloadStart = true;
     initialSettings.useOnLoadResource = true;
     initialSettings.builtInZoomControls = false;
-  //  initialSettings.displayZoomControls = false;
+    initialSettings.mediaPlaybackRequiresUserGesture = true;
+    initialSettings.allowsInlineMediaPlayback = true;
+   initialSettings.displayZoomControls = false;
     initialSettings.supportZoom = false;
     initialSettings.textZoom = 100;
     initialSettings.useShouldOverrideUrlLoading = true;
@@ -366,7 +368,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         await controller.setSettings(settings: initialSettings);
         _webViewController = controller;
         _webViewController?.setSettings(
-            settings:InAppWebViewSettings(builtInZoomControls:false)
+            settings:initialSettings
         );
       // _webViewController?.loadData(data: htmlContent, mimeType: 'text/html', encoding: 'utf-8');
         addJavaScriptHandlers(controller, context);
@@ -794,16 +796,28 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
                 }
 
                 LocationPermission permission = await Geolocator.checkPermission();
+                print('locationCheck 0 $permission');
+
                 if (permission == LocationPermission.denied) {
+                  print('locationCheck 1 $permission');
                   permission = await Geolocator.requestPermission();
 
                   if (permission == LocationPermission.deniedForever) {
+                    print('locationCheck 2 $permission');
+
                     ph.openAppSettings();
                     return;
                   } else if (permission != LocationPermission.whileInUse &&
                       permission != LocationPermission.always) {
+                    print('locationCheck 3 $permission');
+
                     return;
                   }
+                } else if(permission == LocationPermission.deniedForever) {
+                  print('locationCheck 4 $permission');
+
+                  ph.openAppSettings();
+                  return;
                 }
               },
               text: "Enable Location",
