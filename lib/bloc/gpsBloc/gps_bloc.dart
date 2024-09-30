@@ -14,7 +14,7 @@ class GPSBloc extends Bloc<GPSEvent, GPSState> {
     on<UpdateGPSStatus>(_onUpdateGPSStatus);
 
     _startServiceStatusStream();
-    _startPermissionCheckTimer();
+   // _startPermissionCheckTimer();
   }
 
   void _startServiceStatusStream() {
@@ -25,7 +25,7 @@ class GPSBloc extends Bloc<GPSEvent, GPSState> {
   }
 
   void _startPermissionCheckTimer() {
-    _permissionCheckTimer = Timer.periodic(Duration(seconds: 5), (timer) async {
+    _permissionCheckTimer = Timer.periodic(Duration(minutes: 1), (timer) async {
       bool isGPSEnabled = await Geolocator.isLocationServiceEnabled();
       bool isPermissionGranted = await _checkLocationPermission();
       print('isPermissionGranted $isPermissionGranted');

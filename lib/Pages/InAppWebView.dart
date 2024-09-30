@@ -9,7 +9,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
@@ -52,10 +51,17 @@ class WebViewTab extends StatefulWidget {
 }
 
 class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
+
+  static const MethodChannel _channel = MethodChannel('dialer_channel');
+
+
   InAppWebViewController? _webViewController;
   FindInteractionController? _findInteractionController;
   bool _isWindowClosed = false;
   bool IsInternetConnected = true;
+  bool _isAppInForeground = true;
+  late GPSBloc _gpsBloc;
+
   AlertDialog? _gpsDialog;
   UserInfo? _userInfo;
   bool userDetailsAvaible = false;
@@ -65,8 +71,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   TextEditingController();
   final TextEditingController _httpAuthPasswordController =
   TextEditingController();
-
-
 
   Future<void> setupInteractedMessage() async {
     // To handle messages while your application is in the foreground, listen to the onMessage stream
@@ -163,6 +167,22 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       statusBarColor: Colors.blueAccent, // Change this to the desired color
     ));
 
+    _gpsBloc = BlocProvider.of<GPSBloc>(context);
+
+    // Set up the GPS listener here
+    _gpsBloc.stream.listen((state) {
+      if (state is GPSStatusUpdated) {
+        print('gpsUpdateStatus $state');
+        if (!state.isGPSEnabled || !state.isPermissionGranted) {
+          _showGPSDialog(context);
+        } else {
+          _dismissGPSDialog(context);
+        }
+      }
+    });
+
+
+
     _internetConnectionStatus();
     setupInteractedMessage();
     _findInteractionController = FindInteractionController();
@@ -171,22 +191,23 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       userDetailsAvaible = true;
       _userInfo = widget.userInfo;
     }
+
+   /* Timer.periodic(Duration(hours: 1), (timer) {
+      _webViewController?.clearCache();
+    });*/
+
   }
 
 
   void _internetConnectionStatus() {
     InternetConnection().onStatusChange.listen((InternetStatus status) {
-      switch (status) {
-        case InternetStatus.connected:
-          setState(() {
-            IsInternetConnected = true;
-          });
-          break;
-        case InternetStatus.disconnected:
-          setState(() {
-            IsInternetConnected = false;
-          });
-          break;
+      if (_isAppInForeground) { // Only update if the app is in the foreground
+        setState(() {
+
+          IsInternetConnected = (status == InternetStatus.connected);
+          print('checkInternetConnectivity $IsInternetConnected');
+
+        });
       }
     });
   }
@@ -194,8 +215,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _webViewController = null;
 
+    _webViewController?.dispose();
     _httpAuthUsernameController.dispose();
     _httpAuthPasswordController.dispose();
 
@@ -206,6 +227,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      _isAppInForeground = state == AppLifecycleState.resumed; // Track if the app is in foreground
+    });
     if (_webViewController != null && Util.isAndroid()) {
       if (state == AppLifecycleState.paused) {
         pauseAll();
@@ -259,7 +283,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
     _statusBarHeight = MediaQuery.of(context).padding.top;
 
-
     return PopScope(
       canPop: canPop,
       onPopInvoked: (didPop) async {
@@ -280,28 +303,11 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
             ),
           ) : Stack(
               children: [
-              Container(
-              color: Colors.white,
-              margin: EdgeInsets.only(top: _statusBarHeight),
-              child: BlocConsumer<GPSBloc, GPSState>(
-                  listener: (context, state) {
-                    print('gpsState : xy');
-                    if (state is GPSStatusUpdated) {
-                      print('gpsState 1: ${state.isGPSEnabled}');
-                      print('gpsState 2: ${state.isPermissionGranted}');
-
-                      if (!state.isGPSEnabled || !state.isPermissionGranted) {
-                        _showGPSDialog(context);
-                      } else {
-                        _dismissGPSDialog(context);
-                      }
-                    }
-                  },
-                  builder: (context, state) {
-                    return  _buildWebView();
-                  },
-              ),
-              ),
+                Container(
+                  color: Colors.white,
+                  margin: EdgeInsets.only(top: _statusBarHeight),
+                  child: _buildWebView(), // Only WebView UI remains here
+                ),
                 if (_isLoading) ...[
                   ModalBarrier(
                     dismissible: false,
@@ -323,15 +329,15 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   InAppWebView _buildWebView() {
 
-    if (Util.isAndroid()) {
+    if (!kReleaseMode && Util.isAndroid()) {
       InAppWebViewController.setWebContentsDebuggingEnabled(true);
     }
 
     var initialSettings = InAppWebViewSettings();
     initialSettings.mixedContentMode = MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW;
-    initialSettings.isInspectable = true;
-    initialSettings.useOnDownloadStart = true;
-    initialSettings.useOnLoadResource = true;
+  //  initialSettings.isInspectable = true;
+  //  initialSettings.useOnDownloadStart = true;
+ //   initialSettings.useOnLoadResource = true;
     initialSettings.builtInZoomControls = false;
   //  initialSettings.displayZoomControls = false;
     initialSettings.supportZoom = false;
@@ -340,7 +346,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     initialSettings.javaScriptCanOpenWindowsAutomatically = true;
     initialSettings.userAgent =
     "Mozilla/5.0 (Linux; Android 9; LG-H870 Build/PKQ1.190522.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.106 Mobile Safari/537.36";
-    initialSettings.transparentBackground = true;
+    initialSettings.transparentBackground = false;
 
     initialSettings.safeBrowsingEnabled = true;
     initialSettings.disableDefaultErrorPage = true;
@@ -405,8 +411,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
           consoleIconData = Icons.report_problem;
           consoleIconColor = Colors.orangeAccent;
         }
-
-
       },
       onLoadResource: (controller, resource) {
 
@@ -424,27 +428,12 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
               url,
             );
             // and cancel the request
-            print('thisOneGetCall 1');
             return NavigationActionPolicy.CANCEL;
           }
         }
-        print('thisOneGetCall 2');
         return NavigationActionPolicy.ALLOW;
       },
 
-
-      onDownloadStartRequest: (controller, url) async {
-        String path = url.url.path;
-        String fileName = path.substring(path.lastIndexOf('/') + 1);
-
-        await FlutterDownloader.enqueue(
-          url: url.toString(),
-          fileName: fileName,
-          savedDir: (await getTemporaryDirectory()).path,
-          showNotification: true,
-          openFileFromNotification: true,
-        );
-      },
       onReceivedServerTrustAuthRequest: (controller, challenge) async {
         var sslError = challenge.protectionSpace.sslError;
         print('checkServerTrust $sslError');
@@ -461,45 +450,19 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
             action: ServerTrustAuthResponseAction.PROCEED);
       },
       onReceivedError: (controller, request, error) async {
+
+        if(error.description.contains("net::ERR_INTERNET_DISCONNECTED")) {
+          setState(() {
+            IsInternetConnected = false;
+          });
+          return;
+        }
+
         print("Received error: ${error.description}");
         var isForMainFrame = request.isForMainFrame ?? false;
         if (!isForMainFrame) {
           return;
         }
-        /*
-
-        _webViewController?.loadData(data: """
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <style>
-    ${await InAppWebViewController.tRexRunnerCss}
-    </style>
-    <style>
-    .interstitial-wrapper {
-        box-sizing: border-box;
-        font-size: 1em;
-        line-height: 1.6em;
-        margin: 0 auto 0;
-        max-width: 600px;
-        width: 100%;
-    }
-    </style>
-</head>
-<body>
-    ${await InAppWebViewController.tRexRunnerHtml}
-    <div class="interstitial-wrapper">
-      <h1>Website not available</h1>
-      <p>Could not load web pages at <strong>$errorUrl</strong> because:</p>
-      <p>${error.description}</p>
-    </div>
-</body>
-    """, baseUrl: errorUrl, historyUrl: errorUrl);
-*/
-
 
       },
       onTitleChanged: (controller, title) async {
@@ -511,6 +474,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
           return;
         }
         _isWindowClosed = true;
+      //  await controller.clearCache();
+
       },
       onPermissionRequest: (controller, permissionRequest) async {
         return PermissionResponse(
@@ -522,6 +487,22 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
     );
 
+  }
+
+  void startCacheManagementTimer(InAppWebViewController controller) {
+    Timer.periodic(Duration(minutes: 2), (timer) {
+      print('cactchingclear');
+      clearWebViewCache(controller);
+    });
+  }
+
+  void clearWebViewCache(InAppWebViewController controller) async {
+    // Clears only the WebView cache
+    await controller.clearCache();
+
+    // Preserve cookies and local storage
+    CookieManager cookieManager = CookieManager.instance();
+    // Do not clear cookies to retain user sessions
   }
 
 
@@ -580,12 +561,20 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
     controller.addJavaScriptHandler(handlerName: 'openDialer', callback: (args) async {
       String phoneNumber = args[0];
-      String url = 'tel:$phoneNumber';
-      if (await canLaunch(url)) {
-        await launch(url);
-      } else {
-        throw 'Could not launch $url';
-      };
+      if(Platform.isAndroid) {
+        try {
+          await _channel.invokeMethod('dial', {'phoneNumber': phoneNumber});
+        } on PlatformException catch (e) {
+          print("Failed to dial: '${e.message}'.");
+        }
+      }else{
+        String url = 'tel:$phoneNumber';
+        if (await canLaunch(url)) {
+          await launch(url);
+        } else {
+          throw 'Could not launch $url';
+        };
+      }
     });
 
 
@@ -860,11 +849,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       });
     }
   }
-
 }
-
-
-
 
 
 void showPermissionSettingsDialog(BuildContext context, String msg) {
