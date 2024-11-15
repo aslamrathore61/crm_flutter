@@ -27,6 +27,7 @@ import '../Component/buttons/socal_button.dart';
 import '../InAppWebViewUtil.dart';
 import '../SharePrefFile.dart';
 import '../Utils.dart';
+import '../Utils/constants.dart';
 import '../bloc/gpsBloc/gps_bloc.dart';
 import '../bloc/gpsBloc/gps_state.dart';
 import '../main.dart';
@@ -484,6 +485,14 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
       onReceivedHttpAuthRequest: (controller, challenge) async {
 
+        var username = "uat@savemax"; // Replace with actual username or obtain from user input
+        var password = "uat@54321"; // Replace with actual password or obtain from user input
+        return HttpAuthResponse(
+          username: username,
+          password: password,
+          action: HttpAuthResponseAction.PROCEED,
+        );
+
       },
     );
 
@@ -507,6 +516,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
 
 
+
+
   void addJavaScriptHandlers(InAppWebViewController controller, BuildContext context) {
 
   //  String response = "";
@@ -519,8 +530,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         return await setLatLongToWeb(context);
       }else if (messageFromWeb == "CaptureSiteImage") {
         final responseValue = await showOptions(context);
-        Map<String, dynamic> response = jsonDecode(responseValue);
-        return response;
+        List<dynamic> parsedResponse = jsonDecode(responseValue);
+        String str = jsonEncode(parsedResponse[0]);
+        return str;
       }else if (messageFromWeb == "GenerateFCMToken") {
        return await Util.sentDeviceInfoToWeb();
         //_hideSystemUI();
@@ -679,68 +691,131 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     return await uploadImage(file);
   }
 
+
+
+
   Future<String> uploadImage(File imageFile) async {
+    setState(() {
+      _isLoading = true;
+    });
 
-    print('imageFIle ${imageFile.path}');
-
-
-    if(imageFile.path.isEmpty || imageFile.path == "null" || imageFile.path == null) {
-      setState(() {
-        _isLoading = false;
-      });
-    }else {
-      setState(() {
-        _isLoading = true;
-      });
-
-    }
-
-    String barearToken = await getPrefStringValue(Config.BarearToken);
+    String bearerToken = await getPrefStringValue(Config.BarearToken);
+    print('BearerToken $bearerToken');
     final dio = Dio();
-    const url = Config.IMAGE_UPLOAD;
+    const url = 'https://rise-uat.savemax.com/1.0/api/upload/file';
 
     // Generate the current date and time in the desired format
-    String formattedDate =
-    DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
+    String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
     String noSpacesStr = formattedDate.replaceAll(' ', '_');
     String name = 'properties_$noSpacesStr.png';
 
     FormData formData = FormData.fromMap({
-      'file': await MultipartFile.fromFile(imageFile.path, filename: name),
+      'files': await MultipartFile.fromFile(imageFile.path, filename: name),
     });
 
-    final response = await dio.post(url,
-        data: formData,
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $barearToken', // Replace with your token
-            'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/plain, */*',
-            'Referer': 'https://sync.savemax.com/',
-            'platform': 'web',
-            'sec-ch-ua':
-            '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"'
-          },
-        ));
-    var responseData = jsonEncode(response.data);
+    try {
+      final response = await dio.post(url,
+          data: formData,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $bearerToken', // Replace with your token
+              'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+              'Accept': 'application/json, text/plain, */*',
+              'Referer': 'https://sync.savemax.com/',
+              'platform': 'web',
+              'sec-ch-ua':
+              '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+              'sec-ch-ua-mobile': '?0',
+              'sec-ch-ua-platform': '"Windows"'
+            },
+          ));
 
-    setState(() {
-      _isLoading = false;
-    });
+      var responseData = jsonEncode(response.data);
 
-    print("jsonResponse : $responseData");
-
-    if (response.statusCode == 200) {
-      return responseData;
-    } else {
+      print('responseCheck $responseData');
+      if (response.statusCode == 200) {
+        setState(() {
+          _isLoading = false;
+        });
+        return responseData;
+      } else {
+        showToast(message: "Image upload failed. Please try again.");
+        return "";
+      }
+    } catch (e) {
+      print('exceptionCheck ${e}');
+      showToast(message: "Image upload failed. Please try again.");
+      setState(() {
+        _isLoading = false;
+      });
       return "";
     }
-
   }
+
+
+  // Future<String> uploadImage(File imageFile) async {
+  //
+  //   print('imageFIle ${imageFile.path}');
+  //
+  //
+  //   if(imageFile.path.isEmpty || imageFile.path == "null" || imageFile.path == null) {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //   }else {
+  //     setState(() {
+  //       _isLoading = true;
+  //     });
+  //
+  //   }
+  //
+  //   String barearToken = await getPrefStringValue(Config.BarearToken);
+  //   final dio = Dio();
+  //   const url = Config.IMAGE_UPLOAD;
+  //
+  //   // Generate the current date and time in the desired format
+  //   String formattedDate =
+  //   DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
+  //   String noSpacesStr = formattedDate.replaceAll(' ', '_');
+  //   String name = 'properties_$noSpacesStr.png';
+  //
+  //   FormData formData = FormData.fromMap({
+  //     'file': await MultipartFile.fromFile(imageFile.path, filename: name),
+  //   });
+  //
+  //   final response = await dio.post(url,
+  //       data: formData,
+  //       options: Options(
+  //         headers: {
+  //           'Authorization': 'Bearer $barearToken', // Replace with your token
+  //           'User-Agent':
+  //           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  //           'Content-Type': 'application/json',
+  //           'Accept': 'application/json, text/plain, */*',
+  //           'Referer': 'https://sync.savemax.com/',
+  //           'platform': 'web',
+  //           'sec-ch-ua':
+  //           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+  //           'sec-ch-ua-mobile': '?0',
+  //           'sec-ch-ua-platform': '"Windows"'
+  //         },
+  //       ));
+  //   var responseData = jsonEncode(response.data);
+  //
+  //   setState(() {
+  //     _isLoading = false;
+  //   });
+  //
+  //   print("jsonResponse : $responseData");
+  //
+  //   if (response.statusCode == 200) {
+  //     return responseData;
+  //   } else {
+  //     return "";
+  //   }
+  //
+  // }
 
 
   Future<void> _launchUrl(String _url) async {

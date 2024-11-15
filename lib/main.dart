@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:crm_flutter/bloc/gpsBloc/gps_bloc.dart';
 import 'package:crm_flutter/bloc/gpsBloc/gps_event.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -32,7 +34,16 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 }
 
+class MyHttpOverrides extends HttpOverrides{
+  @override
+  HttpClient createHttpClient(SecurityContext? context){
+    return super.createHttpClient(context)
+      ..badCertificateCallback = (X509Certificate cert, String host, int port)=> true;
+  }
+}
+
 Future<void> main() async {
+  HttpOverrides.global = new MyHttpOverrides();
 
 
   WidgetsFlutterBinding.ensureInitialized();

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 // import 'package:fluttertoast/fluttertoast.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io' as io; // Import dart:io with a prefix
@@ -21,19 +22,24 @@ const darkGreyColor = Color(0xFFF8F9FA);
 
 const String BaseUrl = 'https://savemax.com';
 
-/*
-void showToast(String message, Color color, Icon icon) {
+void showToast({
+  required String message,
+  ToastGravity gravity = ToastGravity.TOP,
+  Color backgroundColor = Colors.red,
+  Color textColor = Colors.white,
+  double fontSize = 16.0,
+}) {
   Fluttertoast.showToast(
     msg: message,
     toastLength: Toast.LENGTH_SHORT,
-    gravity: ToastGravity.BOTTOM,
+    gravity: gravity,
     timeInSecForIosWeb: 1,
-    backgroundColor: color,
-    textColor: Colors.white,
-    fontSize: 16.0,
+    backgroundColor: backgroundColor,
+    textColor: textColor,
+    fontSize: fontSize,
   );
 }
-*/
+
 
 
 Future<File> createFile(Uint8List bytes) async {
