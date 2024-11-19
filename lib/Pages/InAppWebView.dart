@@ -136,7 +136,10 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     final String? payloadString = notificationResponse.payload;
     if (payloadString != null) {
       final Map<String, dynamic> payloadMap = jsonDecode(payloadString);
+      print('notificationPayLoad ${payloadMap}');
       final String? url = payloadMap['url'];
+      print('notificationPayLoadurl ${url}');
+
       handleDeepLink(url);
     }
   }
@@ -185,7 +188,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
 
     _internetConnectionStatus();
-    setupInteractedMessage();
+   // setupInteractedMessage();
     _findInteractionController = FindInteractionController();
 
     if (widget.userInfo != null) {
@@ -672,10 +675,11 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   Future<String> getImageFromCamera() async {
     String response = "";
-    await picker.pickImage(source: ImageSource.camera, imageQuality: 25)
+    await picker.pickImage(source: ImageSource.camera, imageQuality: 20)
         .then((value) async => {
       if (value != null) {
-        response = await cropImageCall(File(value.path))
+     //  response = await cropImageCall(File(value.path))
+       response = await uploadImage(File(value.path))
       }
     });
 
