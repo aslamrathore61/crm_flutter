@@ -1,8 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_cropper/image_cropper.dart';
+// import 'package:image_cropper/image_cropper.dart';
 
-Future<String?> cropImage(File imgFile) async {
+/*Future<String?> cropImage(File imgFile) async {
   final croppedFile = await ImageCropper().cropImage(
       sourcePath: imgFile.path,
       aspectRatioPresets: Platform.isAndroid
@@ -40,7 +40,7 @@ Future<String?> cropImage(File imgFile) async {
   }
 
   return null;
-}
+}*/
 
 
 Map<String, dynamic> get defaultHeaders => {

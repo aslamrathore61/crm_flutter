@@ -687,6 +687,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   }
 
 
+/*
   Future<String> cropImageCall(File imgFile) async {
     String? croppedImagePath = await cropImage(imgFile);
     print("croppedImagePath $croppedImagePath");
@@ -694,6 +695,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
     return await uploadImage(file);
   }
+*/
 
 
 
@@ -706,7 +708,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     String bearerToken = await getPrefStringValue(Config.BarearToken);
     print('BearerToken $bearerToken');
     final dio = Dio();
-    const url = 'https://rise-uat.savemax.com/1.0/api/upload/file';
+    const url = Config.IMAGE_UPLOAD;
 
     // Generate the current date and time in the desired format
     String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
