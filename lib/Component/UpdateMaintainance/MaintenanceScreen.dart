@@ -25,7 +25,7 @@ class MaintenanceScreen extends StatelessWidget {
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Sync CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
+                        Text('Rise CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
                         SizedBox(height: 6,),
                         Text(' Under Maintenance!',style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.w400),),
                       ],
