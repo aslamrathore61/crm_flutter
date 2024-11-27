@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.2.0+3
+version: 1.15.0+15
 
 environment:
   sdk: '>=3.2.6 <4.0.0'
@@ -27,8 +27,8 @@ dependencies:
 
   flutter_inappwebview: ^6.0.0
   flutter_native_splash: ^2.4.3
-  internet_connection_checker_plus: ^2.5.2
-
+#  internet_connection_checker_plus: ^2.5.2
+  connectivity_plus: ^6.1.0
   flutter_launcher_icons: ^0.14.1
 
   path_provider: ^2.1.3
@@ -75,8 +75,8 @@ flutter_icons:
 #  adaptive_icon_foreground: "assets/icons/icon_foreground.png" # Optional: For adaptive icons
 
 flutter_native_splash:
-  android: true
-  ios: true
+  android: false
+  ios: false
   color: "#FFFFFF" # Background color of the splash screen
   image: assets/images/splash_image.png # Path to your splash screen image
   android_gravity: center # Align image in the center

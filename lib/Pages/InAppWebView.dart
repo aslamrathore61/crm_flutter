@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:crm_flutter/Config.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:dio/dio.dart';
@@ -14,19 +15,14 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:location/location.dart';
 import 'package:lottie/lottie.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Component/buttons/socal_button.dart';
 import '../InAppWebViewUtil.dart';
 import '../SharePrefFile.dart';
-import '../Utils.dart';
 import '../Utils/constants.dart';
 import '../bloc/gpsBloc/gps_bloc.dart';
 import '../bloc/gpsBloc/gps_state.dart';
@@ -186,8 +182,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     });
 
 
+    monitorConnectivity();
 
-    _internetConnectionStatus();
+  //  _internetConnectionStatus();
    // setupInteractedMessage();
     _findInteractionController = FindInteractionController();
 
@@ -203,18 +200,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   }
 
 
-  void _internetConnectionStatus() {
-    InternetConnection().onStatusChange.listen((InternetStatus status) {
-      if (_isAppInForeground) { // Only update if the app is in the foreground
-        setState(() {
 
-          IsInternetConnected = (status == InternetStatus.connected);
-          print('checkInternetConnectivity $IsInternetConnected');
-
-        });
-      }
-    });
-  }
 
 
   @override
@@ -303,7 +289,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
           child: IsInternetConnected == false ?
           Center(
             child: NoInternetConnectionPage(
-              tryAgain: _checkInitialConnectivity,
+              tryAgain: checkConnectivity,
             ),
           ) : Stack(
               children: [
@@ -339,37 +325,28 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
     var initialSettings = InAppWebViewSettings();
     initialSettings.mixedContentMode = MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW;
-  //  initialSettings.isInspectable = true;
-  //  initialSettings.useOnDownloadStart = true;
- //   initialSettings.useOnLoadResource = true;
     initialSettings.builtInZoomControls = false;
-  //  initialSettings.displayZoomControls = false;
     initialSettings.supportZoom = false;
+    initialSettings.allowFileAccessFromFileURLs = true;
+    initialSettings.allowUniversalAccessFromFileURLs = true;
     initialSettings.textZoom = 100;
     initialSettings.useShouldOverrideUrlLoading = true;
     initialSettings.javaScriptCanOpenWindowsAutomatically = true;
-    initialSettings.userAgent =
-    "Mozilla/5.0 (Linux; Android 9; LG-H870 Build/PKQ1.190522.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.106 Mobile Safari/537.36";
+    initialSettings.userAgent = "Mozilla/5.0 (Linux; Android 9; LG-H870 Build/PKQ1.190522.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/83.0.4103.106 Mobile Safari/537.36";
     initialSettings.transparentBackground = false;
-
     initialSettings.safeBrowsingEnabled = true;
     initialSettings.disableDefaultErrorPage = true;
-    //initialSettings.supportMultipleWindows = true;
+    initialSettings.cacheEnabled = true; // Enable caching
     initialSettings.verticalScrollbarThumbColor =
     const Color.fromRGBO(0, 0, 0, 0.5);
     initialSettings.horizontalScrollbarThumbColor =
     const Color.fromRGBO(0, 0, 0, 0.5);
-
     initialSettings.allowsLinkPreview = false;
-  //  initialSettings.isFraudulentWebsiteWarningEnabled = true;
     initialSettings.disableLongPressContextMenuOnLinks = true;
-    //initialSettings.allowingReadAccessTo = WebUri('file://$WEB_ARCHIVE_DIR/');
 
     return InAppWebView(
-    //  keepAlive: InAppWebViewKeepAlive(),
    initialUrlRequest: URLRequest(url: WebUri(Config.HOME_URL)),
     initialSettings: initialSettings,
-     // windowId: widget.webViewModel.windowId,
       findInteractionController: _findInteractionController,
       onWebViewCreated: (controller) async {
         initialSettings.transparentBackground = false;
@@ -378,7 +355,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         _webViewController?.setSettings(
             settings:InAppWebViewSettings(builtInZoomControls:false)
         );
-      // _webViewController?.loadData(data: htmlContent, mimeType: 'text/html', encoding: 'utf-8');
+
         addJavaScriptHandlers(controller, context);
         if (Util.isAndroid()) {
           controller.startSafeBrowsing();
@@ -386,14 +363,13 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
       },
       onLoadStart: (controller, url) async {
-
-      print('onLoadStart $url');
+    //  print('onLoadStart $url');
       },
       onLoadStop: (controller, url) async {
-        print('onLoadStop $url');
+      //  print('onLoadStop $url');
       },
       onProgressChanged: (controller, progress) {
-        print('onProgressChanged $progress');
+      //  print('onProgressChanged $progress');
       },
       onUpdateVisitedHistory: (controller, url, androidIsReload) async {
       },
@@ -455,7 +431,12 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
       onReceivedError: (controller, request, error) async {
 
-        if(error.description.contains("net::ERR_INTERNET_DISCONNECTED")) {
+        if(error.description.contains("net::ERR_INTERNET_DISCONNECTED")
+            || error.description.contains("net::ERR_NAME_NOT_RESOLVED")
+            || error.description.contains("net::ERR_TIMED_OUT")
+            || error.description.contains("net::ERR_FAILED")
+            || error.description.contains("net::ERR_ADDRESS_UNREACHABLE")
+        ) {
           setState(() {
             IsInternetConnected = false;
           });
@@ -532,10 +513,18 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
        print("getcall call");
         return await setLatLongToWeb(context);
       }else if (messageFromWeb == "CaptureSiteImage") {
-        final responseValue = await showOptions(context);
-        List<dynamic> parsedResponse = jsonDecode(responseValue);
-        String str = jsonEncode(parsedResponse[0]);
-        return str;
+
+        if(Config.IMAGE_UPLOAD == "https://crmapi.savemax.com/api/file-upload/image") {
+          final responseValue = await showOptions(context);
+          Map<String, dynamic> response = jsonDecode(responseValue);
+          return response;
+        }else{
+          final responseValue = await showOptions(context);
+          List<dynamic> parsedResponse = jsonDecode(responseValue);
+          String str = jsonEncode(parsedResponse[0]);
+          return str;
+        }
+
       }else if (messageFromWeb == "GenerateFCMToken") {
        return await Util.sentDeviceInfoToWeb();
         //_hideSystemUI();
@@ -687,19 +676,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   }
 
 
-/*
-  Future<String> cropImageCall(File imgFile) async {
-    String? croppedImagePath = await cropImage(imgFile);
-    print("croppedImagePath $croppedImagePath");
-    File file = File('$croppedImagePath');
-
-    return await uploadImage(file);
-  }
-*/
-
-
-
-
   Future<String> uploadImage(File imageFile) async {
     setState(() {
       _isLoading = true;
@@ -716,7 +692,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     String name = 'properties_$noSpacesStr.png';
 
     FormData formData = FormData.fromMap({
-      'files': await MultipartFile.fromFile(imageFile.path, filename: name),
+      '${Config.fileTageName}': await MultipartFile.fromFile(imageFile.path, filename: name),
     });
 
     try {
@@ -759,76 +735,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     }
   }
 
-
-  // Future<String> uploadImage(File imageFile) async {
-  //
-  //   print('imageFIle ${imageFile.path}');
-  //
-  //
-  //   if(imageFile.path.isEmpty || imageFile.path == "null" || imageFile.path == null) {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //   }else {
-  //     setState(() {
-  //       _isLoading = true;
-  //     });
-  //
-  //   }
-  //
-  //   String barearToken = await getPrefStringValue(Config.BarearToken);
-  //   final dio = Dio();
-  //   const url = Config.IMAGE_UPLOAD;
-  //
-  //   // Generate the current date and time in the desired format
-  //   String formattedDate =
-  //   DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
-  //   String noSpacesStr = formattedDate.replaceAll(' ', '_');
-  //   String name = 'properties_$noSpacesStr.png';
-  //
-  //   FormData formData = FormData.fromMap({
-  //     'file': await MultipartFile.fromFile(imageFile.path, filename: name),
-  //   });
-  //
-  //   final response = await dio.post(url,
-  //       data: formData,
-  //       options: Options(
-  //         headers: {
-  //           'Authorization': 'Bearer $barearToken', // Replace with your token
-  //           'User-Agent':
-  //           'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-  //           'Content-Type': 'application/json',
-  //           'Accept': 'application/json, text/plain, */*',
-  //           'Referer': 'https://sync.savemax.com/',
-  //           'platform': 'web',
-  //           'sec-ch-ua':
-  //           '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-  //           'sec-ch-ua-mobile': '?0',
-  //           'sec-ch-ua-platform': '"Windows"'
-  //         },
-  //       ));
-  //   var responseData = jsonEncode(response.data);
-  //
-  //   setState(() {
-  //     _isLoading = false;
-  //   });
-  //
-  //   print("jsonResponse : $responseData");
-  //
-  //   if (response.statusCode == 200) {
-  //     return responseData;
-  //   } else {
-  //     return "";
-  //   }
-  //
-  // }
-
-
-  Future<void> _launchUrl(String _url) async {
-    if (!await launchUrl(Uri.parse(_url))) {
-      throw Exception('Could not launch $_url');
-    }
-  }
 
   void _showGPSDialog(BuildContext context) {
     if (_gpsDialog == null) {
@@ -898,18 +804,86 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _checkInitialConnectivity() async {
-    IsInternetConnected = await InternetConnection().hasInternetAccess;
+  // Future<void> _checkInitialConnectivity() async {
+  //   IsInternetConnected = await InternetConnection().hasInternetAccess;
+  //
+  //   if (IsInternetConnected) {
+  //     _webViewController?.reload();
+  //   }
+  //
+  //   setState(() {
+  //     IsInternetConnected;
+  //   });
+  //
+  // }
 
-    if (IsInternetConnected) {
-      _webViewController?.reload();
-    }
 
-    setState(() {
-      IsInternetConnected;
+  // void _internetConnectionStatus() {
+  //   InternetConnection().onStatusChange.listen((InternetStatus status) {
+  //     if (_isAppInForeground) { // Only update if the app is in the foreground
+  //       setState(() {
+  //
+  //         IsInternetConnected = (status == InternetStatus.connected);
+  //         print('checkInternetConnectivity $IsInternetConnected');
+  //
+  //       });
+  //     }
+  //   });
+  // }
+  void monitorConnectivity() {
+    Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
+      for (var result in results) {
+        switch (result) {
+          case ConnectivityResult.mobile:
+          //  print("Nomini :Switched to Mobile Network");
+            setState(() {
+              IsInternetConnected = true;
+            });
+            break;
+          case ConnectivityResult.wifi:
+          //  print("Nomini :Switched to Wi-Fi");
+            setState(() {
+              IsInternetConnected = true;
+            });
+            break;
+          case ConnectivityResult.none:
+         //   print("Nomini :No Network Connection");
+            setState(() {
+              IsInternetConnected = false;
+            });
+            break;
+          default:
+         //   print("Nomini :Unknown Network State");
+            setState(() {
+              IsInternetConnected = false;
+            });
+        }
+      }
     });
-
   }
+
+
+  Future<void> checkConnectivity() async {
+    var connectivityResult = await Connectivity().checkConnectivity();
+    print('Nomini connectivityResul : $connectivityResult');
+    if (connectivityResult == ConnectivityResult.mobile) {
+    //  print("Nomini :Connected to Mobile Network");
+      setState(() {
+        IsInternetConnected = true;
+      });
+    } else if (connectivityResult == ConnectivityResult.wifi) {
+    //  print("Nomini :Connected to Wi-Fi");
+      setState(() {
+        IsInternetConnected = true;
+      });
+    } else {
+    //  print("Nomini :No Network Connection");
+      setState(() {
+        IsInternetConnected = false;
+      });
+    }
+  }
+
 
   Future<void> _exitApp(BuildContext context, InAppWebViewController inAppWebViewController) async {
     if (await inAppWebViewController.canGoBack()) {

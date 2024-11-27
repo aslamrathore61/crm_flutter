@@ -13,13 +13,16 @@ class Config {
   // new rise for sync backend
 /*  static const String HOME_URL = "https://risemb-uat.savemax.com";
   static const String IMAGE_UPLOAD = "https://syncapp.savemax.com/api/upload/file";
-  static const String MENU_API  = "https://syncapp.savemax.com/api/other/menu-item/";*/
+  static const String MENU_API  = "https://syncapp.savemax.com/api/other/menu-item/";
+  static const String fileTageName = "files";
+  */
 
 
   // prod
   static const String HOME_URL = "https://syncmb.savemax.com/";
   static const String IMAGE_UPLOAD = "https://crmapi.savemax.com/api/file-upload/image";
   static const String MENU_API  = "https://crmapi.savemax.com/api/other/menu-item/";
+  static const String fileTageName = "file";
 
   //Hive
   static const String USER_INFO_BOX = "user_info_box";
@@ -34,9 +37,6 @@ class Config {
   static const String IOS_VERSION = "ios_version";
   static const String isMaintenance = "isMaintenance";
   static const String BarearToken = "BarearToken";
-
-
-
 
 
 }

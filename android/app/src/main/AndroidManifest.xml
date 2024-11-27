@@ -26,7 +26,7 @@
     -->
 
     <application
-        android:label="Rise CRM"
+        android:label="Sync CRM"
         android:exported="true"
         android:launchMode="singleTop"
         android:icon="@mipmap/ic_launcher"
@@ -34,8 +34,7 @@
         android:theme="@style/LaunchTheme"
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true"
-        android:networkSecurityConfig="@xml/network_security_config"
-        >
+        android:networkSecurityConfig="@xml/network_security_config">
         <activity
             android:name="com.savemax.crm.crm_flutter.MainActivity"
             android:exported="true"
@@ -45,7 +44,10 @@
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
-            android:windowSoftInputMode="adjustResize">
+            android:windowSoftInputMode="adjustResize"
+           >
+            <!-- android:windowSoftInputMode="adjustResize"-->
+            <meta-data android:name="flutterEmbedding" android:value="2"/>
             <!-- Specifies an Android theme to apply to this Activity as soon as
                  the Android process has started. This theme is visible to the user
                  while the Flutter UI initializes. After that, this theme continues
