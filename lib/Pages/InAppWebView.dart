@@ -31,6 +31,7 @@ import '../model/native_item.dart';
 import '../model/user_info.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:geolocator/geolocator.dart' as geolocator;
+import 'package:image/image.dart' as img; // Add this package in pubspec.yaml
 
 import 'NoInternetConnectionPage.dart';
 
@@ -109,7 +110,11 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     // If the message also contains a data property with a "type" of "chat",
     // navigate to a chat screen
     if (initialMessage != null) {
-      _handleMessage(initialMessage);
+  //  showToast(message: 'test:${initialMessage.data['url']}');
+      // Delay the deep link handling while other code runs
+      Future.delayed(Duration(seconds: 3), () {
+        _handleMessage(initialMessage);
+      });
     }
     /*else {
       handleDeepLink(null);
@@ -141,6 +146,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   }
 
   void _handleMessage(RemoteMessage message) {
+
     handleDeepLink(message.data['url']);
   }
 
@@ -185,7 +191,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     monitorConnectivity();
 
   //  _internetConnectionStatus();
-   // setupInteractedMessage();
     _findInteractionController = FindInteractionController();
 
     if (widget.userInfo != null) {
@@ -193,7 +198,10 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       _userInfo = widget.userInfo;
     }
 
-   /* Timer.periodic(Duration(hours: 1), (timer) {
+    setupInteractedMessage();
+
+
+    /* Timer.periodic(Duration(hours: 1), (timer) {
       _webViewController?.clearCache();
     });*/
 
@@ -327,7 +335,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     initialSettings.mixedContentMode = MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW;
     initialSettings.builtInZoomControls = false;
     initialSettings.supportZoom = false;
-    initialSettings.allowFileAccessFromFileURLs = true;
+   // initialSettings.initialSettings.allowFileAccessFromFileURLs = true;
     initialSettings.allowUniversalAccessFromFileURLs = true;
     initialSettings.textZoom = 100;
     initialSettings.useShouldOverrideUrlLoading = true;
@@ -353,7 +361,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         await controller.setSettings(settings: initialSettings);
         _webViewController = controller;
         _webViewController?.setSettings(
-            settings:InAppWebViewSettings(builtInZoomControls:false)
+            settings:InAppWebViewSettings(builtInZoomControls:false,javaScriptEnabled: true,useHybridComposition: true)
         );
 
         addJavaScriptHandlers(controller, context);
@@ -362,6 +370,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         }
 
       },
+
       onLoadStart: (controller, url) async {
     //  print('onLoadStart $url');
       },
@@ -431,19 +440,18 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
       onReceivedError: (controller, request, error) async {
 
-        if(error.description.contains("net::ERR_INTERNET_DISCONNECTED")
-            || error.description.contains("net::ERR_NAME_NOT_RESOLVED")
-            || error.description.contains("net::ERR_TIMED_OUT")
-            || error.description.contains("net::ERR_FAILED")
-            || error.description.contains("net::ERR_ADDRESS_UNREACHABLE")
-        ) {
+        //   || error.description.contains("net::ERR_NAME_NOT_RESOLVED")
+        // || error.description.contains("net::ERR_TIMED_OUT")
+        //  || error.description.contains("net::ERR_FAILED")
+        //  || error.description.contains("net::ERR_ADDRESS_UNREACHABLE")
+        if(error.description.contains("net::ERR_INTERNET_DISCONNECTED")) {
           setState(() {
             IsInternetConnected = false;
           });
           return;
         }
 
-        print("Received error: ${error.description}");
+        print("Receivederror: ${error.description}");
         var isForMainFrame = request.isForMainFrame ?? false;
         if (!isForMainFrame) {
           return;
@@ -482,35 +490,15 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   }
 
-  void startCacheManagementTimer(InAppWebViewController controller) {
-    Timer.periodic(Duration(minutes: 2), (timer) {
-      print('cactchingclear');
-      clearWebViewCache(controller);
-    });
-  }
-
-  void clearWebViewCache(InAppWebViewController controller) async {
-    // Clears only the WebView cache
-    await controller.clearCache();
-
-    // Preserve cookies and local storage
-    CookieManager cookieManager = CookieManager.instance();
-    // Do not clear cookies to retain user sessions
-  }
-
-
 
 
 
   void addJavaScriptHandlers(InAppWebViewController controller, BuildContext context) {
 
-  //  String response = "";
-
     controller.addJavaScriptHandler(handlerName: 'fromWebToFlutter', callback: (args) async {
       final messageFromWeb = args[0];
 
       if (messageFromWeb == "agentClockOut" || messageFromWeb == "agentClockIn" || messageFromWeb == "TrackCall" || messageFromWeb == "getActivityCoordinate") {
-       print("getcall call");
         return await setLatLongToWeb(context);
       }else if (messageFromWeb == "CaptureSiteImage") {
 
@@ -581,32 +569,12 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       }
     });
 
-
-
-
-    controller.addJavaScriptHandler(handlerName: 'openShare', callback: (args) async {
-      String url = args[0];
-    //  _shareContent(url);
-
-    });
-
   }
-
- /* Future<void> _shareContent(String url) async {
-
-    String branchLink = await generateBranchLink(url);
-
-    Share.share('$branchLink');
-  }*/
 
 
   Future<void> _handleJsonMessageUserInfo(Map<String, dynamic> data) async {
     try {
-      /*if (data['action'] == 'Share') {
-        print('actionshare ${data['action']}');
-        shareURL(data['text'], data['url']);
-        //title
-      } else */if (data['type'] == 'login') {
+     if (data['type'] == 'login') {
         String barearToken = data['token'];
         await setPrefStringValue(Config.BarearToken, barearToken);
       } else {
@@ -664,7 +632,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   Future<String> getImageFromCamera() async {
     String response = "";
-    await picker.pickImage(source: ImageSource.camera, imageQuality: 20)
+    await picker.pickImage(source: ImageSource.camera, imageQuality: 40, maxHeight: 1024,maxWidth: 1024)
         .then((value) async => {
       if (value != null) {
      //  response = await cropImageCall(File(value.path))
@@ -675,11 +643,36 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     return response;
   }
 
+  Future<File> resizeImage(File file) async {
+    // Read the image from the file
+    final rawImage = img.decodeImage(file.readAsBytesSync());
 
-  Future<String> uploadImage(File imageFile) async {
+    if (rawImage != null) {
+      // Determine if the image is portrait or landscape
+      bool isPortrait = rawImage.height > rawImage.width;
+
+      // Resize the image to the desired dimensions
+      final resized = img.copyResize(
+        rawImage,
+        width: isPortrait ? 720 : 1280,
+        height: isPortrait ? 1280 : 720,
+      );
+
+      // Save the resized image back to a file
+      final resizedFile = File(file.path)..writeAsBytesSync(img.encodeJpg(resized));
+      return resizedFile;
+    } else {
+      throw Exception("Failed to decode image");
+    }
+  }
+
+
+  Future<String> uploadImage(File resizedImage) async {
     setState(() {
       _isLoading = true;
     });
+
+   // File resizedImage = await resizeImage(imageFile);
 
     String bearerToken = await getPrefStringValue(Config.BarearToken);
     print('BearerToken $bearerToken');
@@ -692,7 +685,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     String name = 'properties_$noSpacesStr.png';
 
     FormData formData = FormData.fromMap({
-      '${Config.fileTageName}': await MultipartFile.fromFile(imageFile.path, filename: name),
+      '${Config.fileTageName}': await MultipartFile.fromFile(resizedImage.path, filename: name),
     });
 
     try {
@@ -864,15 +857,16 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
 
   Future<void> checkConnectivity() async {
-    var connectivityResult = await Connectivity().checkConnectivity();
-    print('Nomini connectivityResul : $connectivityResult');
-    if (connectivityResult == ConnectivityResult.mobile) {
-    //  print("Nomini :Connected to Mobile Network");
+   var connectivityResult = await Connectivity().checkConnectivity();
+    String connectivityValue = connectivityResult.toString().replaceAll(RegExp(r'[\[\]]'), '');
+
+    if (connectivityValue == ConnectivityResult.mobile.toString()) {
+     print("Nomini :Connected to Mobile Network");
       setState(() {
         IsInternetConnected = true;
       });
-    } else if (connectivityResult == ConnectivityResult.wifi) {
-    //  print("Nomini :Connected to Wi-Fi");
+    } else if (connectivityValue == ConnectivityResult.wifi.toString()) {
+      print('Nomini connectivityResul wifi : $connectivityValue');
       setState(() {
         IsInternetConnected = true;
       });

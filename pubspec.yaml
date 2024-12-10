@@ -25,12 +25,10 @@ dependencies:
   flutter:
     sdk: flutter
 
-  flutter_inappwebview: ^6.0.0
+  flutter_inappwebview: ^6.2.0-beta.2
   flutter_native_splash: ^2.4.3
-#  internet_connection_checker_plus: ^2.5.2
   connectivity_plus: ^6.1.0
   flutter_launcher_icons: ^0.14.1
-
   path_provider: ^2.1.3
   shared_preferences: ^2.2.3
   flutter_bloc: ^8.1.4
@@ -45,15 +43,15 @@ dependencies:
   package_info_plus: ^8.0.0
   flutter_svg: ^2.0.10+1
   intl: ^0.19.0
-  share_plus: ^9.0.0
+#  share_plus: ^9.0.0
   device_info_plus: ^9.1.2
   image_picker: ^1.1.2
   fluttertoast: ^8.2.8
 
   #Firebase
-  firebase_core: ^2.30.1
-  firebase_crashlytics: ^3.5.4
-  firebase_messaging: ^14.9.1
+#  firebase_core: ^3.8.0
+#  firebase_crashlytics: ^3.5.4
+  firebase_messaging: ^15.1.5
   flutter_local_notifications: ^18.0.1
 
   cupertino_icons: ^1.0.6
@@ -62,26 +60,26 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
 
-  flutter_launcher_icons: ^0.14.1
+#  flutter_launcher_icons: ^0.14.1
   hive_generator: ^2.0.1
   build_runner: ^2.4.9
   flutter_lints: ^3.0.0
 
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/app_icon.png" # Path to your app icon
-  adaptive_icon_background: "#FFFFFF" # Optional: For adaptive icons
-#  adaptive_icon_foreground: "assets/icons/icon_foreground.png" # Optional: For adaptive icons
+#flutter_icons:
+#  android: true
+#  ios: true
+#  image_path: "assets/images/app_icon.png" # Path to your app icon
+#  adaptive_icon_background: "#FFFFFF" # Optional: For adaptive icons
+##  adaptive_icon_foreground: "assets/icons/icon_foreground.png" # Optional: For adaptive icons
 
-flutter_native_splash:
-  android: false
-  ios: false
-  color: "#FFFFFF" # Background color of the splash screen
-  image: assets/images/splash_image.png # Path to your splash screen image
-  android_gravity: center # Align image in the center
-  ios_content_mode: center # Align image in the center
-  fullscreen: true # Use fullscreen mode for splash screen
+#flutter_native_splash:
+#  android: true
+#  ios: true
+#  color: "#FFFFFF" # Background color of the splash screen
+#  image: assets/images/splash_image.png # Path to your splash screen image
+#  android_gravity: center # Align image in the center
+#  ios_content_mode: center # Align image in the center
+#  fullscreen: true # Use fullscreen mode for splash screen
 
 
 flutter:

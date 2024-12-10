@@ -24,7 +24,7 @@ class ForceUpdateScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text('Sync CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
+                        Text('RISE CRM',style: TextStyle(color: Color(0xFF0054a0), fontSize: 18, fontWeight: FontWeight.bold),),
                        // Text(' CRM',style: TextStyle(color: Colors.black, fontSize: 15, fontWeight: FontWeight.bold),),
                       ],
                     ),

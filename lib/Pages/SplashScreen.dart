@@ -34,16 +34,20 @@ class SplashScreen extends StatelessWidget {
         });
 
       } else if (state is NativeItemError) {
-        getSavedDataFromDatabase(savedContext);
+        Timer(const Duration(seconds: 3), () {
+          getSavedDataFromDatabase(savedContext);
+        });
       }else {
-        getSavedDataFromDatabase(savedContext);
+        Timer(const Duration(seconds: 3), () {
+          getSavedDataFromDatabase(savedContext);
+        });
       }
     });
 
     return Scaffold(
       body: Center(
         child: Image.asset(
-          'assets/icons/savemaxdoller.png',
+          'assets/images/splash_image.png',
           width: 150,
           height: 150,
         ),
@@ -91,13 +95,13 @@ void getSavedDataFromDatabase(BuildContext savedContext) async {
       print('platFormVersion : $platformVersion');
 
       if (platformVersion > int.parse(currentVersion)) {
-        FlutterNativeSplash.remove();
+       FlutterNativeSplash.remove();
         Navigator.of(savedContext).pushReplacementNamed('/forceUpdatePage');
       }else if(isMaintenance){
-        FlutterNativeSplash.remove();
+       FlutterNativeSplash.remove();
         Navigator.of(savedContext).pushReplacementNamed('/maintenancePage');
       } else {
-        FlutterNativeSplash.remove();
+       FlutterNativeSplash.remove();
         Navigator.of(savedContext).pushReplacementNamed(
           '/home',
           arguments: {
