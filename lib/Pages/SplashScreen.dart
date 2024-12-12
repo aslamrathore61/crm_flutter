@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:hive/hive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../Config.dart';
+import '../InAppWebViewUtil.dart';
 import '../SharePrefFile.dart';
 import '../bloc/native_item_bloc.dart';
 import '../bloc/native_item_event.dart';
@@ -25,24 +26,29 @@ class SplashScreen extends StatelessWidget {
 
     nativeItemBloc.add(GetMenuDetailsEvents());
 
-    nativeItemBloc.stream.listen((state) async {
-      if (state is NativeItemLoaded &&  state.nativeItem.bottom!.isNotEmpty) {
+    void handleDatabaseUpdate(BuildContext savedContext) {
 
-        saveDataToDatabase(state.nativeItem);
-        Timer(const Duration(seconds: 3), () {
-          getSavedDataFromDatabase(savedContext);
-        });
-
-      } else if (state is NativeItemError) {
-        Timer(const Duration(seconds: 3), () {
-          getSavedDataFromDatabase(savedContext);
-        });
-      }else {
+      if(Util.isIOS()) {
+        getSavedDataFromDatabase(savedContext);
+      }else{
         Timer(const Duration(seconds: 3), () {
           getSavedDataFromDatabase(savedContext);
         });
       }
+
+    }
+
+    nativeItemBloc.stream.listen((state) async {
+      if (state is NativeItemLoaded && state.nativeItem.bottom!.isNotEmpty) {
+        saveDataToDatabase(state.nativeItem);
+        handleDatabaseUpdate(savedContext);
+      } else if (state is NativeItemError) {
+        handleDatabaseUpdate(savedContext);
+      } else {
+        handleDatabaseUpdate(savedContext);
+      }
     });
+
 
     return Scaffold(
       body: Container(
@@ -50,8 +56,8 @@ class SplashScreen extends StatelessWidget {
         child: Center(
           child: Image.asset(
             'assets/images/splash_image.png',
-            width: 220,
-            height: 220,
+            width: 230,
+            height: 230,
           ),
         ),
       ),
