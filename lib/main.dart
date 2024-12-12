@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 // import 'package:flutter_native_splash/flutter_native_splash.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+// import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive_flutter/adapters.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,9 +46,6 @@ class MyHttpOverrides extends HttpOverrides{
 Future<void> main() async {
   HttpOverrides.global = new MyHttpOverrides();
 
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
-  //
   WidgetsFlutterBinding.ensureInitialized();
 
   WEB_ARCHIVE_DIR = (await getApplicationSupportDirectory()).path;

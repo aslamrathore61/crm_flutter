@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RISE CRM</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <link href="https://unpkg.com/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/element-plus@2.2.33"></script>
+  <link rel="stylesheet" href="https://unpkg.com/element-plus@2.2.33/dist/index.css">
+  <style>
+    .centerAlign {
+      text-align: center;
+    }
+    .title {
+      margin-top: 2.0rem;
+      font-family: 'Poppins', sans-serif;
+      font-size: 3.0rem;
+      color: #fff;
+      margin-bottom: 0;
+    }
+    .subtitle {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.5rem;
+      color: #fff;
+      margin-top: 0;
+      padding: 5px;
+    }
+    .auth-page-wrapper {
+      background-color: #f8f9fa;
+      height: 100vh;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="centerAlign">
+    <div class="title">RISE CRM</div>
+    <div class="subtitle">The Real Estate Information and Sales Enabler</div>
+  </div>
+  <div class="auth-page-wrapper pt-5">
+    <div class="auth-page-content">
+      <div class="container">
+        <div class="row justify-content-center">
+          <div class="col-md-8 col-lg-6 col-xl-5">
+            <div class="card mt-4">
+              <div class="card-body p-4">
+                <div class="text-center mt-2">
+                  <h5 class="text-primary">Welcome Back!</h5>
+                  <p class="text-muted">Sign in to continue using RISE CRM</p>
+                </div>
+                <div class="p-2 mt-4">
+                  <form @submit.prevent="handleLogin">
+                    <div class="mb-3">
+                      <label for="username" class="form-label">Email</label>
+                      <input v-model="username" type="text" class="form-control" id="username" placeholder="Enter email">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label" for="password">Password</label>
+                      <input v-model="password" type="password" class="form-control" id="password" placeholder="Enter password">
+                    </div>
+                    <div class="form-check">
+                      <input v-model="rememberMe" class="form-check-input" type="checkbox" id="remember">
+                      <label class="form-check-label" for="remember">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-4">Sign In</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  const app = Vue.createApp({
+    data() {
+      return {
+        username: '',
+        password: '',
+        rememberMe: false,
+      };
+    },
+    methods: {
+      handleLogin() {
+        alert('Logging in with: ' + this.username);
+      }
+    },
+  });
+  app.mount('#app');
+
+  // Keyboard handling
+  window.addEventListener('resize', () => {
+    const activeElement = document.activeElement;
+    if (activeElement && activeElement.tagName === 'INPUT') {
+      setTimeout(() => {
+        activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+    }
+  });
+</script>
+</body>
+</html>

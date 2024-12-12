@@ -13,17 +13,17 @@ class Config {
   // new rise for sync backend
   static const String HOME_URL = "https://risemb-uat.savemax.com";
   static const String IMAGE_UPLOAD = "https://syncapp.savemax.com/api/upload/file";
+  static const String PROFILEiMG_UPLOAD = "https://syncapp.savemax.com/api/agent/upload";
   static const String MENU_API  = "https://syncapp.savemax.com/api/other/menu-item/";
   static const String fileTageName = "files";
 
 
-  // prod
-/*
-  static const String HOME_URL = "https://syncmb.savemax.com/";
+  // prod sync
+/*  static const String HOME_URL = "https://syncmb.savemax.com/";
   static const String IMAGE_UPLOAD = "https://crmapi.savemax.com/api/file-upload/image";
   static const String MENU_API  = "https://crmapi.savemax.com/api/other/menu-item/";
   static const String fileTageName = "file";
-*/
+  static const String PROFILEiMG_UPLOAD = "https://syncapp.savemax.com/api/agent/upload";*/
 
   //Hive
   static const String USER_INFO_BOX = "user_info_box";

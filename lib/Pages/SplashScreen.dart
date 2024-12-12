@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_native_splash/flutter_native_splash.dart';
+// import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:hive/hive.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../Config.dart';
@@ -45,11 +45,14 @@ class SplashScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      body: Center(
-        child: Image.asset(
-          'assets/images/splash_image.png',
-          width: 150,
-          height: 150,
+      body: Container(
+        color: Colors.white,
+        child: Center(
+          child: Image.asset(
+            'assets/images/splash_image.png',
+            width: 220,
+            height: 220,
+          ),
         ),
       ),
     );
@@ -95,13 +98,13 @@ void getSavedDataFromDatabase(BuildContext savedContext) async {
       print('platFormVersion : $platformVersion');
 
       if (platformVersion > int.parse(currentVersion)) {
-       FlutterNativeSplash.remove();
+       // FlutterNativeSplash.remove();
         Navigator.of(savedContext).pushReplacementNamed('/forceUpdatePage');
       }else if(isMaintenance){
-       FlutterNativeSplash.remove();
+       // FlutterNativeSplash.remove();
         Navigator.of(savedContext).pushReplacementNamed('/maintenancePage');
       } else {
-       FlutterNativeSplash.remove();
+       // FlutterNativeSplash.remove();
         Navigator.of(savedContext).pushReplacementNamed(
           '/home',
           arguments: {

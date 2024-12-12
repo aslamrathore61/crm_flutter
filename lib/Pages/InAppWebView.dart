@@ -503,16 +503,19 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       }else if (messageFromWeb == "CaptureSiteImage") {
 
         if(Config.IMAGE_UPLOAD == "https://crmapi.savemax.com/api/file-upload/image") {
-          final responseValue = await showOptions(context);
+          final responseValue = await showOptions(context,true);
           Map<String, dynamic> response = jsonDecode(responseValue);
           return response;
         }else{
-          final responseValue = await showOptions(context);
+          final responseValue = await showOptions(context,true);
           List<dynamic> parsedResponse = jsonDecode(responseValue);
           String str = jsonEncode(parsedResponse[0]);
           return str;
         }
-
+      }else if (messageFromWeb == "ProfileImage") {
+        final responseValue = await showOptions(context,false);
+        print("responseValue $responseValue");
+        return responseValue;
       }else if (messageFromWeb == "GenerateFCMToken") {
        return await Util.sentDeviceInfoToWeb();
         //_hideSystemUI();
@@ -595,7 +598,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
 
 //Show options to get image from camera or gallery
-  Future<String> showOptions(BuildContext context) async {
+  Future<String> showOptions(BuildContext context,bool isCameraOnly) async {
 
     String response = "";
     AndroidDeviceInfo? deviceInfo;
@@ -604,25 +607,39 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       deviceInfo = await DeviceInfoPlugin().androidInfo;
     }
 
-    if (Platform.isAndroid && deviceInfo != null && deviceInfo.version.sdkInt <= 32) {
-      var permissionStatus = await Permission.camera.request();
+    if(isCameraOnly) {
+      if (Platform.isAndroid && deviceInfo != null && deviceInfo.version.sdkInt <= 32) {
+        var permissionStatus = await Permission.camera.request();
 
-      if (permissionStatus.isGranted) {
-        // get image from camera
-        response = await getImageFromCamera();
-      } else if (permissionStatus.isPermanentlyDenied) {
-        showPermissionSettingsDialog(context,
-            'Please enable storage permission in app settings to use this feature.');
-      }
-    } else {
-      final permissionStatus = await Permission.camera.status;
-      if (permissionStatus.isPermanentlyDenied) {
-        showPermissionSettingsDialog(context,
-            'Please enable storage permission in app settings to use this feature.');
+        if (permissionStatus.isGranted) {
+          // get image from camera
+          response = await getImageFromCamera(false);
+        } else if (permissionStatus.isPermanentlyDenied) {
+          showPermissionSettingsDialog(context,
+              'Please enable storage permission in app settings to use this feature.');
+        }
       } else {
-        response = await getImageFromCamera();
+        final permissionStatus = await Permission.camera.status;
+        if (permissionStatus.isPermanentlyDenied) {
+          showPermissionSettingsDialog(context,
+              'Please enable storage permission in app settings to use this feature.');
+        } else {
+          response = await getImageFromCamera(false);
+        }
       }
+    }else{
+    //  response = await _showPickerDialog(context);
+
+      String selectedResponse = await _showPickerDialog(context);
+      print("SelectedOption: $selectedResponse");
+      if (selectedResponse == "camera") {
+        response = await getImageFromCamera(true);
+      } else if (selectedResponse == "gallery") {
+        response = await getImageFromGallery(true);
+      }
+
     }
+
 
     return response;
 
@@ -630,62 +647,65 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   final picker = ImagePicker();
 
-  Future<String> getImageFromCamera() async {
+  Future<String> getImageFromCamera(bool isProfileImage) async {
     String response = "";
     await picker.pickImage(source: ImageSource.camera, imageQuality: 40, maxHeight: 1024,maxWidth: 1024)
         .then((value) async => {
       if (value != null) {
      //  response = await cropImageCall(File(value.path))
-       response = await uploadImage(File(value.path))
+       response = await uploadImage(File(value.path),isProfileImage)
       }
     });
 
     return response;
   }
 
-  Future<File> resizeImage(File file) async {
-    // Read the image from the file
-    final rawImage = img.decodeImage(file.readAsBytesSync());
+  Future<String> getImageFromGallery(bool isProfileImage) async {
+    String response = "";
+    await picker
+        .pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 40,
+      maxHeight: 1024,
+      maxWidth: 1024,
+    )
+        .then((value) async {
+      if (value != null) {
+        // Process the selected image
+        // Example: Crop the image or upload it
+        // response = await cropImageCall(File(value.path));
+        response = await uploadImage(File(value.path),isProfileImage);
+      }
+    });
 
-    if (rawImage != null) {
-      // Determine if the image is portrait or landscape
-      bool isPortrait = rawImage.height > rawImage.width;
-
-      // Resize the image to the desired dimensions
-      final resized = img.copyResize(
-        rawImage,
-        width: isPortrait ? 720 : 1280,
-        height: isPortrait ? 1280 : 720,
-      );
-
-      // Save the resized image back to a file
-      final resizedFile = File(file.path)..writeAsBytesSync(img.encodeJpg(resized));
-      return resizedFile;
-    } else {
-      throw Exception("Failed to decode image");
-    }
+    return response;
   }
 
 
-  Future<String> uploadImage(File resizedImage) async {
+  Future<String> uploadImage(File resizedImage, bool isProfileImg) async {
     setState(() {
       _isLoading = true;
     });
 
-   // File resizedImage = await resizeImage(imageFile);
-
     String bearerToken = await getPrefStringValue(Config.BarearToken);
     print('BearerToken $bearerToken');
     final dio = Dio();
-    const url = Config.IMAGE_UPLOAD;
+
+    // Set the correct URL based on the 'isProfileImg' flag
+    String url = isProfileImg ? Config.PROFILEiMG_UPLOAD : Config.IMAGE_UPLOAD;
+    print("urlTest $url");
 
     // Generate the current date and time in the desired format
     String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
     String noSpacesStr = formattedDate.replaceAll(' ', '_');
     String name = 'properties_$noSpacesStr.png';
 
+    // Choose the correct form-data field name based on the API being called
+    String fileName = isProfileImg ? "file" : Config.fileTageName;
+
+    // Prepare the form data
     FormData formData = FormData.fromMap({
-      '${Config.fileTageName}': await MultipartFile.fromFile(resizedImage.path, filename: name),
+      '$fileName': await MultipartFile.fromFile(resizedImage.path, filename: name,contentType: DioMediaType('image', 'png'),),
     });
 
     try {
@@ -693,31 +713,39 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
           data: formData,
           options: Options(
             headers: {
-              'Authorization': 'Bearer $bearerToken', // Replace with your token
-              'User-Agent':
-              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+              'Authorization': 'Bearer $bearerToken', // Include the Bearer Token
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
               'Accept': 'application/json, text/plain, */*',
               'Referer': 'https://sync.savemax.com/',
               'platform': 'web',
-              'sec-ch-ua':
-              '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+              'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
               'sec-ch-ua-mobile': '?0',
-              'sec-ch-ua-platform': '"Windows"'
+              'sec-ch-ua-platform': '"Windows"',
+              'Content-Type': 'multipart/form-data' // Ensure correct content type
             },
           ));
 
       var responseData = jsonEncode(response.data);
 
       print('responseCheck $responseData');
-      if (response.statusCode == 200) {
+
+      if(isProfileImg) {
         setState(() {
           _isLoading = false;
         });
-        return responseData;
-      } else {
-        showToast(message: "Image upload failed. Please try again.");
-        return "";
+        return response.statusCode.toString();
+      }else {
+        if (response.statusCode == 200) {
+          setState(() {
+            _isLoading = false;
+          });
+          return responseData;
+        } else {
+          showToast(message: "Image upload failed. Please try again.");
+          return "";
+        }
       }
+
     } catch (e) {
       print('exceptionCheck ${e}');
       showToast(message: "Image upload failed. Please try again.");
@@ -726,6 +754,108 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       });
       return "";
     }
+  }
+
+
+
+  //
+  // Future<String> uploadImage(File resizedImage, bool isProfileImg) async {
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+  //
+  //
+  //   String bearerToken = await getPrefStringValue(Config.BarearToken);
+  //   print('BearerToken $bearerToken');
+  //   final dio = Dio();
+  //
+  //  String url = isProfileImg ? Config.PROFILEiMG_UPLOAD : Config.IMAGE_UPLOAD;
+  //  print("urlTest $url");
+  //  // String url = Config.IMAGE_UPLOAD;
+  //
+  //   // Generate the current date and time in the desired format
+  //   String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
+  //   String noSpacesStr = formattedDate.replaceAll(' ', '_');
+  //   String name = 'properties_$noSpacesStr.png';
+  //
+  //   String fileName = isProfileImg ? "file" : Config.fileTageName;
+  //   FormData formData = FormData.fromMap({'$fileName}': await MultipartFile.fromFile(resizedImage.path, filename: name),
+  //   });
+  //
+  //   try {
+  //     final response = await dio.post(url,
+  //         data: formData,
+  //         options: Options(
+  //           headers: {
+  //             'Authorization': 'Bearer $bearerToken', // Replace with your token
+  //             'User-Agent':
+  //             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+  //             'Accept': 'application/json, text/plain, */*',
+  //             'Referer': 'https://sync.savemax.com/',
+  //             'platform': 'web',
+  //             'sec-ch-ua':
+  //             '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+  //             'sec-ch-ua-mobile': '?0',
+  //             'sec-ch-ua-platform': '"Windows"'
+  //           },
+  //         ));
+  //
+  //     var responseData = jsonEncode(response.data);
+  //
+  //     print('responseCheck $responseData');
+  //     if (response.statusCode == 200) {
+  //       setState(() {
+  //         _isLoading = false;
+  //       });
+  //       return responseData;
+  //     } else {
+  //       showToast(message: "Image upload failed. Please try again.");
+  //       return "";
+  //     }
+  //   } catch (e) {
+  //     print('exceptionCheck ${e}');
+  //     showToast(message: "Image upload failed. Please try again.");
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //     return "";
+  //   }
+  // }
+
+
+
+  Future<String> _showPickerDialog(BuildContext context) async {
+    String response = ""; // Default response
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Select an option"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera),
+                title: Text("Camera"),
+                onTap: () {
+                  response = "camera"; // Default camera response
+                  Navigator.pop(context); // Dismiss dialog
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library),
+                title: Text("Gallery"),
+                onTap: () {
+                  response = "gallery"; // Default gallery response
+                  Navigator.pop(context); // Dismiss dialog
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    return response; // Return the selected response
   }
 
 
