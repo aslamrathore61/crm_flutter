@@ -2,7 +2,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Theme applied to the Android Window while the process is starting when the OS's Dark Mode setting is off -->
     <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+<!--
         <item name="android:windowIsTranslucent">true</item>
+-->
 
     </style>
     <!-- Theme applied to the Android Window as soon as the process has started.

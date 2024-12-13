@@ -27,15 +27,9 @@ class SplashScreen extends StatelessWidget {
     nativeItemBloc.add(GetMenuDetailsEvents());
 
     void handleDatabaseUpdate(BuildContext savedContext) {
-
-      if(Util.isIOS()) {
+      Timer(const Duration(seconds: 3), () {
         getSavedDataFromDatabase(savedContext);
-      }else{
-        Timer(const Duration(seconds: 3), () {
-          getSavedDataFromDatabase(savedContext);
-        });
-      }
-
+      });
     }
 
     nativeItemBloc.stream.listen((state) async {
@@ -79,7 +73,6 @@ void getSavedDataFromDatabase(BuildContext savedContext) async {
     // Get the UserInfo object from the box
     userInfoItem = userBox.get(Config.USER_INFO_KEY);
   }catch(e){
-    print('exceptionofget ${e.toString()}');
   }
 
 
@@ -89,19 +82,16 @@ void getSavedDataFromDatabase(BuildContext savedContext) async {
     var box = await Hive.openBox<NativeItem>(Config.NATIVE_ITEM_BOX); // Open the box
     NativeItem? nativeItem = box.get(Config.NATIVE_ITEM_KEY); // Get the NativeItem object from the box
 
-    print('nativeBottomItem ${nativeItem?.bottom?.isEmpty}');
     if (nativeItem != null) {
 
       PackageInfo packageInfo = await PackageInfo.fromPlatform();
 
       String currentVersion = packageInfo.buildNumber;
-      print('currentVersion ${currentVersion}');
 
       final String platformVersionKey = Platform.isAndroid ? Config.ANDROID_VERSION : Config.IOS_VERSION;
       final int platformVersion = await getPrefIntegerValue(platformVersionKey);
       final bool isMaintenance = await getPrefBoolValue(Config.isMaintenance);
 
-      print('platFormVersion : $platformVersion');
 
       if (platformVersion > int.parse(currentVersion)) {
        // FlutterNativeSplash.remove();
