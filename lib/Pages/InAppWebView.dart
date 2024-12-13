@@ -344,7 +344,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     initialSettings.transparentBackground = false;
     initialSettings.safeBrowsingEnabled = true;
     initialSettings.disableDefaultErrorPage = true;
-    initialSettings.cacheEnabled = true; // Enable caching
+    initialSettings.sharedCookiesEnabled = true;
+    initialSettings.clearCache = false;
+   // initialSettings.cacheEnabled = true; // Enable caching
     initialSettings.verticalScrollbarThumbColor =
     const Color.fromRGBO(0, 0, 0, 0.5);
     initialSettings.horizontalScrollbarThumbColor =
@@ -361,7 +363,15 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         await controller.setSettings(settings: initialSettings);
         _webViewController = controller;
         _webViewController?.setSettings(
-            settings:InAppWebViewSettings(builtInZoomControls:false,javaScriptEnabled: true,useHybridComposition: true)
+            settings:InAppWebViewSettings(
+              javaScriptEnabled: true,
+              sharedCookiesEnabled: true,
+              clearCache: false,
+              supportZoom: false,            // Disables pinch-to-zoom
+              builtInZoomControls: false,    // Hides zoom controls
+              displayZoomControls: false,    // Disables zoom control visibility (Android specific)
+              disableContextMenu: true,      // Disables long-press context menu
+            )
         );
 
         addJavaScriptHandlers(controller, context);
@@ -497,7 +507,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
     controller.addJavaScriptHandler(handlerName: 'fromWebToFlutter', callback: (args) async {
       final messageFromWeb = args[0];
-
+      print('javcaScriptinKey :$messageFromWeb');
       if (messageFromWeb == "agentClockOut" || messageFromWeb == "agentClockIn" || messageFromWeb == "TrackCall" || messageFromWeb == "getActivityCoordinate") {
         return await setLatLongToWeb(context);
       }else if (messageFromWeb == "CaptureSiteImage") {
