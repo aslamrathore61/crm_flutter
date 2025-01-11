@@ -12,6 +12,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:hive/hive.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,10 +24,10 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Component/buttons/socal_button.dart';
 import '../InAppWebViewUtil.dart';
-import '../SharePrefFile.dart';
 import '../Utils/constants.dart';
 import '../bloc/gpsBloc/gps_bloc.dart';
 import '../bloc/gpsBloc/gps_state.dart';
+import '../locationbasedrawer/canada_drawer.dart';
 import '../main.dart';
 import '../model/native_item.dart';
 import '../model/user_info.dart';
@@ -48,21 +50,27 @@ class WebViewTab extends StatefulWidget {
   State<WebViewTab> createState() => _WebViewTabState();
 }
 
-class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
+class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, TickerProviderStateMixin {
+
+
+
+  late final TabController _tabController;
+  GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _isGestureDisabled = false; // Track whether gestures are disabled
+
+
 
   static const MethodChannel _channel = MethodChannel('dialer_channel');
-
 
   InAppWebViewController? _webViewController;
   FindInteractionController? _findInteractionController;
   bool _isWindowClosed = false;
   bool IsInternetConnected = true;
-  bool _isAppInForeground = true;
+  bool tabBarVisibliy = false;
   late GPSBloc _gpsBloc;
 
   AlertDialog? _gpsDialog;
   UserInfo? _userInfo;
-  bool userDetailsAvaible = false;
   late String deepLinkingURL;
 
   final TextEditingController _httpAuthUsernameController =
@@ -146,7 +154,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
   }
 
   void _handleMessage(RemoteMessage message) {
-
     handleDeepLink(message.data['url']);
   }
 
@@ -158,7 +165,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     } else {
       deepLinkingURL = Config.HOME_URL;
     }
-
    _webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(deepLinkingURL)));
   }
 
@@ -168,6 +174,12 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     print('thisOneGetCall');
     WidgetsBinding.instance.addObserver(this);
     super.initState();
+
+
+    _tabController = TabController(
+      length: widget.nativeItem.bottom!.length,
+      vsync: this,
+    );
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.blueAccent, // Change this to the desired color
@@ -194,7 +206,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     _findInteractionController = FindInteractionController();
 
     if (widget.userInfo != null) {
-      userDetailsAvaible = true;
       _userInfo = widget.userInfo;
     }
 
@@ -225,9 +236,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    setState(() {
-      _isAppInForeground = state == AppLifecycleState.resumed; // Track if the app is in foreground
-    });
     if (_webViewController != null && Util.isAndroid()) {
       if (state == AppLifecycleState.paused) {
         pauseAll();
@@ -289,7 +297,250 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
         }
       },
       child: Scaffold(
+        key: _scaffoldKey,
         resizeToAvoidBottomInset: Platform.isAndroid ? true : false,
+        bottomNavigationBar: Visibility(
+          visible: tabBarVisibliy,
+          child: AbsorbPointer(
+            absorbing: _isGestureDisabled, // Disable gestures when true
+            child: Container(
+              color: Colors.white,
+              child: TabBar(
+                labelColor: Colors.lightBlue.shade900,
+                unselectedLabelStyle: TextStyle(fontSize: 13, fontFamily: 'Poppins',fontWeight: FontWeight.w400),
+                unselectedLabelColor: Colors.grey,
+                controller: _tabController,
+                indicator: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: Colors.lightBlue.shade900, // Color of the indicator
+                      width: 4.0, // Height of the indicator
+                    ),
+                  ),
+                ),
+                labelPadding: EdgeInsets.symmetric(vertical: 0),
+                labelStyle: TextStyle(fontSize: 13, fontFamily: 'Poppins',fontWeight: FontWeight.bold),
+                splashFactory: NoSplash.splashFactory,
+                onTap: (index) {
+                  _onBottomTabTapped(
+                      widget.nativeItem.bottom![index].id ?? "",
+                      widget.nativeItem.bottom![index].uRL ?? "",
+                      _webViewController!);
+
+                  setState(() {
+                    _isGestureDisabled = true;
+                  });
+
+                  // Set the boolean to true after 500 milliseconds
+                  Future.delayed(Duration(milliseconds: 500), () {
+                    setState(() {
+                      _isGestureDisabled = false;
+                    });
+                  });
+                },
+                tabs: widget.nativeItem.bottom!.map((item) {
+                  final svgBytes = base64Decode(item.icon!);
+                  final svgString = utf8.decode(svgBytes);
+                  print('titleName : ${item.title}');
+
+                  return Tab(
+                    icon: SvgPicture.string(
+                      svgString,
+                      width: 24.0,
+                      height: 24.0,
+                      color: _tabController.index ==
+                          widget.nativeItem.bottom!.indexOf(item)
+                          ? Colors.lightBlue.shade900
+                          : Colors.grey,
+                    ),
+                    text: item.title,
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+        drawer: Container(
+            width: MediaQuery.of(context).size.width - 125,
+            color: Colors.white,
+            margin: EdgeInsets.only(top: _statusBarHeight-10),
+            child:  Drawer(
+              child: Column(
+                children: [
+                  // The top 80% space
+                  Expanded(
+                    flex: 9,  // 80% of the space
+                  child: Container(
+                    color: Colors.white,
+                    child: SingleChildScrollView(
+                      child: CanadaDrawerWidget(
+                        onRadioButtonUpdate: (String radioBtValue) {
+                          print("radioButtonValue : $radioBtValue");
+
+                        //  String radioAvaiBreak = radioBtValue == "Available" ? "available" : "onBreak";
+
+                          if(radioBtValue == "Available") {
+                            _webViewController?.evaluateJavascript(
+                                source: "window.onFlutterEvent('available');"
+                            );
+                          }else if(radioBtValue == "On Break") {
+                            _webViewController?.evaluateJavascript(
+                                source: "window.onFlutterEvent('onBreak');"
+                            );
+                          }
+
+
+                        },
+                        onProfileTap: () {
+                          print("onprofiueTab 2");
+                          _scaffoldKey.currentState?.closeDrawer();
+                          _onBottomTabTapped("", "${Config.HOME_URL}profile", _webViewController);
+                        },
+                        userInfo: _userInfo,
+                        nativeItem: widget.nativeItem,
+                        onSideMenuItemTap: (String url, String id, String icon) async {
+                          _scaffoldKey.currentState?.closeDrawer();
+                          print("onSideMenuItemTap : $url");
+                          int _index = 0;
+                          int foundIndex = -1;
+                          widget.nativeItem.bottom?.forEach((element) {
+                            if (element.id == id) {
+                              foundIndex = _index;
+                              return;
+                            }
+                            _index++;
+                          });
+
+                          if (foundIndex != -1) {
+                            print("changesPaswIndex 1 $foundIndex");
+                            _tabController.index = foundIndex;
+                            _onBottomTabTapped(id, url, _webViewController);
+                          } else {
+                            // need to unselected all bottom tab
+                            if(id == "0265f6dd48064f2a9dcb59798changespwd") {
+                              setState(() {
+                                tabBarVisibliy =false;
+                              });
+                            }
+                            print("changesPaswIndex $foundIndex");
+                            _onBottomTabTapped(id, url, _webViewController);
+
+                          }
+
+                          // Your side menu item onTap implementation
+                        },
+                      ),
+                    ),
+                  ),
+                  ),
+
+
+                  Container(
+                    width: double.infinity, // Thickness of the divider
+                    height: 1.0, // Matches the parent's height
+                    color: Colors.grey.shade300, // Color of the divider
+                  ),
+
+
+                  // The bottom 20% space
+                  Expanded(
+                    flex: 1,  // 20% of the space
+                    child: Container(
+                      color: Colors.white,  // Replace with your widget
+                      child: Center(
+                        child: GestureDetector(
+                          onTap:() async {
+                            // Clear all cookies
+                            await CookieManager.instance().deleteAllCookies();
+
+                            // Clear web storage
+                            if (_webViewController != null) {
+                              await _webViewController!
+                                  .clearCache(); // Clear cache (optional but useful)
+
+                              // Run JavaScript to clear local and session storage
+                              await _webViewController!.evaluateJavascript(source: '''
+                                 window.localStorage.clear();
+                                   window.sessionStorage.clear();
+                                      ''');
+
+                            }
+
+                            _scaffoldKey.currentState?.closeDrawer();
+                            _onBottomTabTapped("", "${Config.HOME_URL}/login", _webViewController);
+
+
+                          },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              SizedBox(
+                                width: 16,
+                              ),
+                              Icon(
+                                Icons.logout,
+                                size: 18,
+                                color: Colors.redAccent.shade700,
+                              ),
+                              SizedBox(
+                                width: 16,
+                              ),
+                              Text(
+                                "Logout",
+                                style: TextStyle(
+                                  fontSize: 16.0,
+                                  color: Colors.redAccent.shade700,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                ],
+              ),
+            )),
+            /*child: Drawer(
+                child: Container(
+                  color: Colors.white,
+                  child: SingleChildScrollView(
+                    child: CanadaDrawerWidget(
+                      onRadioButtonUpdate: (String radioBtValue) {
+                        print("radioButtonValue : $radioBtValue");
+                      },
+                      userDetailsAvailable: userDetailsAvaible,
+                      userInfo: widget.userInfo,
+                      nativeItem: widget.nativeItem,
+                      onSideMenuItemTap: (String url, String id, String icon) async {
+                        _scaffoldKey.currentState?.closeDrawer();
+                        print("onSideMenuItemTap : $url");
+                        int _index = 0;
+                        int foundIndex = -1;
+                        widget.nativeItem.bottom?.forEach((element) {
+                          if (element.id == id) {
+                            foundIndex = _index;
+                            return;
+                          }
+                          _index++;
+                        });
+
+                        if (foundIndex != -1) {
+                          _tabController.index = foundIndex;
+                          _onBottomTabTapped(id, url, _webViewController);
+                        } else {
+                          // need to unselected all bottom tab
+                       //   _tabController.index = 3;
+                          _onBottomTabTapped(id, url, _webViewController);
+                        }
+
+                        // Your side menu item onTap implementation
+                      },
+                    ),
+                  ),
+                ))),*/
         body: Container(
         //  margin: EdgeInsets.only(top: _statusBarHeight),
           color: Colors.white,
@@ -372,6 +623,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       },
 
       onLoadStart: (controller, url) async {
+       print("onLoadStart : $url");
     //  print('onLoadStart $url');
       },
       onLoadStop: (controller, url) async {
@@ -459,6 +711,32 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
       },
       onTitleChanged: (controller, title) async {
+     // user this titlechanges when navigate page changes in webview
+     if(title != null) {
+       for (int index = 0; index < widget.nativeItem.bottom!.length; index++) {
+         var element = widget.nativeItem.bottom![index];
+         if (element.naivgate!.contains(title)) {
+           setState(() {
+             _tabController.index = index;
+           });
+         }
+       }
+     }
+
+
+     if(title != null && title.contains("Login") && tabBarVisibliy) {
+          setState(() {
+            tabBarVisibliy = false;
+          });
+        }else if(title != null && title.contains("Change Password") && tabBarVisibliy) {
+       setState(() {
+         tabBarVisibliy = false;
+       });
+     } else if(title != null && !tabBarVisibliy){
+          setState(() {
+            tabBarVisibliy = true;
+          });
+        }
       },
       onCreateWindow: (controller, createWindowRequest) async {
       },
@@ -497,6 +775,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
     controller.addJavaScriptHandler(handlerName: 'fromWebToFlutter', callback: (args) async {
       final messageFromWeb = args[0];
+      print("checkfun : $messageFromWeb");
 
       if (messageFromWeb == "agentClockOut" || messageFromWeb == "agentClockIn" || messageFromWeb == "TrackCall" || messageFromWeb == "getActivityCoordinate") {
         return await setLatLongToWeb(context);
@@ -532,6 +811,92 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
      // print('responseFlutter $response');
      // return response;
+
+    });
+
+
+
+    controller.addJavaScriptHandler(handlerName: 'getFlutterMenu', callback: (args) async {
+      print('whatsappGetCall ${args[0]}');
+
+      return true;
+
+    });
+
+    controller.addJavaScriptHandler(handlerName: 'OpenSideMenu', callback: (args) async {
+      _scaffoldKey.currentState?.openDrawer();
+    });
+
+
+    controller.addJavaScriptHandler(handlerName: 'availableApiResponse', callback: (args) async {
+
+      // Log the response
+      print('availableApiResponse ${args[0]}');
+
+      try {
+        final jsonData = jsonDecode(args[0]);
+        final int code = jsonData['data']['code'];
+       // final String? msgDescription = jsonData['data']['resultmsg'][0]['msgdescription'];
+        if(code == 200) {
+          _userInfo  = await updateAvaiableTagUserInfo(true,"","","");
+          showCustomToast(
+            context,
+            "Resumed work successfully",
+            'assets/icons/success_icon.png',
+          );
+
+         // showToast(message: "Resumed work successfully");
+        }
+      } catch (e) {
+        print('Error parsing JSON: $e');
+      }
+
+
+    });
+
+    controller.addJavaScriptHandler(handlerName: 'onBreakApiResponse', callback: (args) async {
+
+      print('onBreakApiResponse ${args[0]}');
+
+      try {
+        final jsonData = jsonDecode(args[0]);
+        final int code = jsonData['data']['code'];
+     //   final String? msgDescription = jsonData['data']['resultmsg'][0]['msgdescription'];
+        if(code == 200) {
+
+          _userInfo  = await updateAvaiableTagUserInfo(false,"","","");
+
+        //  _userInfo = await updateAvaiableTagUserInfo(true);
+
+
+          showCustomToast(
+            context,
+            "Started break successfully",
+            'assets/icons/success_icon.png',
+          );
+
+        }
+      } catch (e) {
+        print('Error parsing JSON: $e');
+      }
+
+
+    });
+
+
+
+
+
+    controller.addJavaScriptHandler(handlerName: 'getProfileDetails', callback: (args) async {
+     print('getpprofileDetails :  ${args[0]}');
+
+      final jsonData = jsonDecode(args[0]);
+      final String userName = jsonData['name'];
+      final String title = jsonData['title'];
+      final String profileImageUrl = jsonData['profileImageUrl'];
+      final bool available = jsonData['available'] as bool;
+
+     _userInfo  = await updateAvaiableTagUserInfo(available,userName,title,profileImageUrl);
 
     });
 
@@ -576,18 +941,27 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
 
 
   Future<void> _handleJsonMessageUserInfo(Map<String, dynamic> data) async {
+
+    print("userIfoDetails ; $data");
     try {
      if (data['type'] == 'login') {
-        String barearToken = data['token'];
-        await setPrefStringValue(Config.BarearToken, barearToken);
+
+       final UserInfo userInfo = UserInfo.fromJson(data);
+       var box = await Hive.openBox<UserInfo>(Config.USER_INFO_BOX);
+       await box.put(Config.USER_INFO_KEY, userInfo);
+       setState(() {
+         print("userInforDe : ${userInfo.profileImageUrl}");
+         _userInfo = userInfo;
+       });
+
+        // String barearToken = data['token'];
+        // String username = data['name'];
+        // String profileImage = data['profileImageUrl'];
+        // await setPrefStringValue(Config.BarearToken, barearToken);
+        // await setPrefStringValue(Config.ProfileImageUrl, profileImage);
+        // await setPrefStringValue(Config.UseName, username);
       } else {
-        final UserInfo userInfo = UserInfo.fromJson(data);
-        var box = await Hive.openBox<UserInfo>(Config.USER_INFO_BOX);
-        await box.put(Config.USER_INFO_KEY, userInfo);
-        setState(() {
-          _userInfo = userInfo;
-          userDetailsAvaible = true;
-        });
+
       }
     } catch (e) {
       print('Error saving user info: $e');
@@ -687,7 +1061,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       _isLoading = true;
     });
 
-    String bearerToken = await getPrefStringValue(Config.BarearToken);
+    String? bearerToken = _userInfo?.token;
     print('BearerToken $bearerToken');
     final dio = Dio();
 
@@ -927,32 +1301,6 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
     }
   }
 
-  // Future<void> _checkInitialConnectivity() async {
-  //   IsInternetConnected = await InternetConnection().hasInternetAccess;
-  //
-  //   if (IsInternetConnected) {
-  //     _webViewController?.reload();
-  //   }
-  //
-  //   setState(() {
-  //     IsInternetConnected;
-  //   });
-  //
-  // }
-
-
-  // void _internetConnectionStatus() {
-  //   InternetConnection().onStatusChange.listen((InternetStatus status) {
-  //     if (_isAppInForeground) { // Only update if the app is in the foreground
-  //       setState(() {
-  //
-  //         IsInternetConnected = (status == InternetStatus.connected);
-  //         print('checkInternetConnectivity $IsInternetConnected');
-  //
-  //       });
-  //     }
-  //   });
-  // }
   void monitorConnectivity() {
     Connectivity().onConnectivityChanged.listen((List<ConnectivityResult> results) {
       for (var result in results) {
@@ -1028,6 +1376,31 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver {
       });
     }
   }
+}
+
+
+Future<UserInfo?> updateAvaiableTagUserInfo(bool available, String name, String department,String profileImage) async {
+
+  var userBox = await Hive.openBox<UserInfo>(Config.USER_INFO_BOX);
+  UserInfo? userInfoItem = userBox.get(Config.USER_INFO_KEY);
+  if (userInfoItem != null) {
+
+    userInfoItem.available = available;
+    if(name.isNotEmpty) {
+      userInfoItem.name = name;
+    }
+    if(department.isNotEmpty) {
+      userInfoItem.department = department;
+    }
+    if(profileImage.isNotEmpty) {
+      userInfoItem.profileImageUrl = profileImage;
+    }
+    await userBox.put(Config.USER_INFO_KEY, userInfoItem);
+    return userInfoItem;
+  } else {
+    return userInfoItem;
+  }
+
 }
 
 
@@ -1108,6 +1481,13 @@ Future<String> setLatLongToWeb(BuildContext context) async {
 }
 
 
+void _onBottomTabTapped(
+    String id, String url, InAppWebViewController? webViewController) async {
+  if (url.isNotEmpty) {
+    print("urlCHeckCOn : $url");
+    webViewController?.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
+  }
+}
 
 
 const String htmlContent = """

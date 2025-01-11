@@ -75,7 +75,9 @@ Future<void> main() async {
     await Hive.initFlutter();
     Hive.registerAdapter(NativeItemAdapter());
     Hive.registerAdapter(BottomAdapter());
+    Hive.registerAdapter(SideAdapter());
     Hive.registerAdapter(UserInfoAdapter());
+    Hive.registerAdapter(SubItemAdapter());
   }
 
   final fcmToken = await messaging.getToken();

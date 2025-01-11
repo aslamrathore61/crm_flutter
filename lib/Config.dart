@@ -1,6 +1,6 @@
 class Config {
 
-  // static const String HOME_URL = "http://172.17.10.161:3000/";
+  static const String HOME_URL = "http://172.17.10.39:3000/";
 
   // uat
 /*
@@ -11,7 +11,7 @@ class Config {
 
 
   // new rise for sync backend
-  static const String HOME_URL = "https://risemb-uat.savemax.com";
+  // static const String HOME_URL = "https://arise-uat.savemax.com/";
   static const String IMAGE_UPLOAD = "https://syncapp.savemax.com/api/upload/file";
   static const String PROFILEiMG_UPLOAD = "https://syncapp.savemax.com/api/agent/upload";
   static const String MENU_API  = "https://syncapp.savemax.com/api/other/menu-item/";
@@ -38,6 +38,8 @@ class Config {
   static const String IOS_VERSION = "ios_version";
   static const String isMaintenance = "isMaintenance";
   static const String BarearToken = "BarearToken";
+  static const String ProfileImageUrl = "ProfileImageUrl";
+  static const String UseName = "UseName";
 
 
 }

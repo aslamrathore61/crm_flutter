@@ -2,72 +2,91 @@ import 'package:hive/hive.dart';
 
 part 'user_info.g.dart';
 
-@HiveType(typeId: 5)
+
+@HiveType(typeId: 5) // Assign a unique typeId for this Hive class
 class UserInfo extends HiveObject {
   @HiveField(0)
-  int? userId;
-
-  @HiveField(1)
-  String? agentId;
-
-  @HiveField(2)
-  String? name;
-
-  @HiveField(3)
   String? token;
 
+  @HiveField(1)
+  String? name;
+
+  @HiveField(2)
+  String? department;
+
+  @HiveField(3)
+  int? status;
+
   @HiveField(4)
-  bool? status;
+  String? message;
 
   @HiveField(5)
-  String? userType;
+  bool? available;
 
   @HiveField(6)
-  int? loginStatus;
+  String? agentUuid;
 
   @HiveField(7)
-  bool? myEventsFlag;
+  String? profileImageUrl;
 
   @HiveField(8)
-  bool? rwrflag;
+  bool? clockedIn;
+
+  @HiveField(9)
+  String? loggedInHrs;
+
+  @HiveField(10)
+  bool? teamLead;
+
+  @HiveField(11)
+  String? type;
 
   UserInfo({
-    this.userId,
-    this.agentId,
-    this.name,
     this.token,
+    this.name,
+    this.department,
     this.status,
-    this.userType,
-    this.loginStatus,
-    this.myEventsFlag,
-    this.rwrflag,
+    this.message,
+    this.available,
+    this.agentUuid,
+    this.profileImageUrl,
+    this.clockedIn,
+    this.loggedInHrs,
+    this.teamLead,
+    this.type,
   });
 
   factory UserInfo.fromJson(Map<String, dynamic> json) {
     return UserInfo(
-      userId: json['userId'],
-      agentId: json['agentId'],
-      name: json['name'],
       token: json['token'],
+      name: json['name'],
+      department: json['department'],
       status: json['status'],
-      userType: json['userType'],
-      loginStatus: json['loginStatus'],
-      myEventsFlag: json['myEventsFlag'],
-      rwrflag: json['rwrflag'],
+      message: json['message'],
+      available: json['available'],
+      agentUuid: json['agentUuid'],
+      profileImageUrl: json['profileImageUrl'],
+      clockedIn: json['clockedIn'],
+      loggedInHrs: json['loggedInHrs'],
+      teamLead: json['teamLead'],
+      type: json['type'],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'userId': userId,
-      'agentId': agentId,
-      'name': name,
       'token': token,
+      'name': name,
+      'department': department,
       'status': status,
-      'userType': userType,
-      'loginStatus': loginStatus,
-      'myEventsFlag': myEventsFlag,
-      'rwrflag': rwrflag,
+      'message': message,
+      'available': available,
+      'agentUuid': agentUuid,
+      'profileImageUrl': profileImageUrl,
+      'clockedIn': clockedIn,
+      'loggedInHrs': loggedInHrs,
+      'teamLead': teamLead,
+      'type': type,
     };
   }
 }

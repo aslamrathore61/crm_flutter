@@ -42,6 +42,58 @@ void showToast({
 
 
 
+void showCustomToast(BuildContext context, String message, String imagePath) {
+  final overlay = Overlay.of(context);
+  final overlayEntry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: 50.0, // Adjust the position as needed
+      left: MediaQuery.of(context).size.width * 0.2,
+      right: MediaQuery.of(context).size.width * 0.2,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.only(top: 6.0,bottom: 6.0),
+          decoration: BoxDecoration(
+            color: Colors.green.withOpacity(0.5),
+            border: Border.all(color: Colors.green,width: 1),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(width: 3),
+              Image.asset(
+                imagePath,
+                width: 30,
+                height: 30,
+              ),
+              const SizedBox(width: 3),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(color:  Colors.green, fontWeight: FontWeight.w700),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+
+  overlay?.insert(overlayEntry);
+
+  // Remove the toast after a delay
+  Future.delayed(const Duration(seconds: 2), () {
+    overlayEntry.remove();
+  });
+}
+
+
+
+
+
 Future<File> createFile(Uint8List bytes) async {
   final tempDir = await getTemporaryDirectory();
   final file = File('${tempDir.path}/image.png');

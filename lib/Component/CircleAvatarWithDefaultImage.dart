@@ -12,7 +12,7 @@ class CircleAvatarWithDefaultImage extends StatelessWidget {
     required this.imageUrl,
     required this.defaultImageUrl,
     required this.radius,
-    this.borderWidth = 2.0,
+    this.borderWidth = 0.0,
     this.borderColor = Colors.black45,
   });
 

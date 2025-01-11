@@ -17,40 +17,49 @@ class UserInfoAdapter extends TypeAdapter<UserInfo> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return UserInfo(
-      userId: fields[0] as int?,
-      agentId: fields[1] as String?,
-      name: fields[2] as String?,
-      token: fields[3] as String?,
-      status: fields[4] as bool?,
-      userType: fields[5] as String?,
-      loginStatus: fields[6] as int?,
-      myEventsFlag: fields[7] as bool?,
-      rwrflag: fields[8] as bool?,
+      token: fields[0] as String?,
+      name: fields[1] as String?,
+      department: fields[2] as String?,
+      status: fields[3] as int?,
+      message: fields[4] as String?,
+      available: fields[5] as bool?,
+      agentUuid: fields[6] as String?,
+      profileImageUrl: fields[7] as String?,
+      clockedIn: fields[8] as bool?,
+      loggedInHrs: fields[9] as String?,
+      teamLead: fields[10] as bool?,
+      type: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserInfo obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(12)
       ..writeByte(0)
-      ..write(obj.userId)
-      ..writeByte(1)
-      ..write(obj.agentId)
-      ..writeByte(2)
-      ..write(obj.name)
-      ..writeByte(3)
       ..write(obj.token)
-      ..writeByte(4)
+      ..writeByte(1)
+      ..write(obj.name)
+      ..writeByte(2)
+      ..write(obj.department)
+      ..writeByte(3)
       ..write(obj.status)
+      ..writeByte(4)
+      ..write(obj.message)
       ..writeByte(5)
-      ..write(obj.userType)
+      ..write(obj.available)
       ..writeByte(6)
-      ..write(obj.loginStatus)
+      ..write(obj.agentUuid)
       ..writeByte(7)
-      ..write(obj.myEventsFlag)
+      ..write(obj.profileImageUrl)
       ..writeByte(8)
-      ..write(obj.rwrflag);
+      ..write(obj.clockedIn)
+      ..writeByte(9)
+      ..write(obj.loggedInHrs)
+      ..writeByte(10)
+      ..write(obj.teamLead)
+      ..writeByte(11)
+      ..write(obj.type);
   }
 
   @override
