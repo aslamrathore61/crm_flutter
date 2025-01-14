@@ -67,6 +67,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
   bool _isWindowClosed = false;
   bool IsInternetConnected = true;
   bool tabBarVisibliy = false;
+  bool tabBarVisibliyTemp = false;
   late GPSBloc _gpsBloc;
 
   AlertDialog? _gpsDialog;
@@ -300,7 +301,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
         key: _scaffoldKey,
         resizeToAvoidBottomInset: Platform.isAndroid ? true : false,
         bottomNavigationBar: Visibility(
-          visible: tabBarVisibliy,
+          visible: tabBarVisibliyTemp,
           child: AbsorbPointer(
             absorbing: _isGestureDisabled, // Disable gestures when true
             child: Container(
@@ -824,7 +825,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
     });
 
     controller.addJavaScriptHandler(handlerName: 'OpenSideMenu', callback: (args) async {
-      _scaffoldKey.currentState?.openDrawer();
+     // _scaffoldKey.currentState?.openDrawer();
+      return "1";
     });
 
 
@@ -838,7 +840,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
         final int code = jsonData['data']['code'];
        // final String? msgDescription = jsonData['data']['resultmsg'][0]['msgdescription'];
         if(code == 200) {
-          _userInfo  = await updateAvaiableTagUserInfo(true,"","","");
+          _userInfo  = await updateAvaiableTagUserInfo(true,true,"","","");
           showCustomToast(
             context,
             "Resumed work successfully",
@@ -864,7 +866,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
      //   final String? msgDescription = jsonData['data']['resultmsg'][0]['msgdescription'];
         if(code == 200) {
 
-          _userInfo  = await updateAvaiableTagUserInfo(false,"","","");
+          _userInfo  = await updateAvaiableTagUserInfo(true,false,"","","");
 
         //  _userInfo = await updateAvaiableTagUserInfo(true);
 
@@ -888,15 +890,34 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
 
 
     controller.addJavaScriptHandler(handlerName: 'getProfileDetails', callback: (args) async {
-     print('getpprofileDetails :  ${args[0]}');
+    // print('getpprofileDetails :  ${args[0]}');
+
+      String userName = "";
+      String profileImageUrl = "";
+      String title = "";
+      late bool? available;
+      available = null;
 
       final jsonData = jsonDecode(args[0]);
-      final String userName = jsonData['name'];
-      final String title = jsonData['title'];
-      final String profileImageUrl = jsonData['profileImageUrl'];
-      final bool available = jsonData['available'] as bool;
 
-     _userInfo  = await updateAvaiableTagUserInfo(available,userName,title,profileImageUrl);
+      if(jsonData['title'] != null) {
+          title = jsonData['title'];
+      }
+
+      if(jsonData['name'] != null) {
+        userName = jsonData['name'];
+      }
+
+      if(jsonData['profileImageUrl'] != null) {
+        profileImageUrl = jsonData['profileImageUrl'];
+      }
+
+      if(jsonData['available'] != null) {
+        available = jsonData['available'];
+      }
+
+
+      _userInfo  = await updateAvaiableTagUserInfo(false,available,userName,title,profileImageUrl);
 
     });
 
@@ -1379,20 +1400,25 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
 }
 
 
-Future<UserInfo?> updateAvaiableTagUserInfo(bool available, String name, String department,String profileImage) async {
+Future<UserInfo?> updateAvaiableTagUserInfo(bool CallThisFunFromAvaiableOnBreak, bool? available, String name, String department,String profileImage) async {
+
+  print('updateTag : $available : $name : $department : $profileImage}');
 
   var userBox = await Hive.openBox<UserInfo>(Config.USER_INFO_BOX);
   UserInfo? userInfoItem = userBox.get(Config.USER_INFO_KEY);
   if (userInfoItem != null) {
 
-    userInfoItem.available = available;
+    if(available != null) {
+      userInfoItem.available = available;
+    }
+
     if(name.isNotEmpty) {
       userInfoItem.name = name;
     }
     if(department.isNotEmpty) {
       userInfoItem.department = department;
     }
-    if(profileImage.isNotEmpty) {
+    if(profileImage.isNotEmpty || !CallThisFunFromAvaiableOnBreak) {
       userInfoItem.profileImageUrl = profileImage;
     }
     await userBox.put(Config.USER_INFO_KEY, userInfoItem);
