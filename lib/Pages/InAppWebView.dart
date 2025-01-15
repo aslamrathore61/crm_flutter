@@ -34,6 +34,8 @@ import '../model/user_info.dart';
 import 'package:permission_handler/permission_handler.dart' as ph;
 import 'package:geolocator/geolocator.dart' as geolocator;
 import 'package:image/image.dart' as img; // Add this package in pubspec.yaml
+import 'package:http_parser/http_parser.dart'; // Import for MediaType
+
 
 import 'NoInternetConnectionPage.dart';
 
@@ -299,6 +301,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
       },
       child: Scaffold(
         key: _scaffoldKey,
+        drawerEnableOpenDragGesture: false,
         resizeToAvoidBottomInset: Platform.isAndroid ? true : false,
         bottomNavigationBar: Visibility(
           visible: tabBarVisibliyTemp,
@@ -830,6 +833,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
     });
 
 
+/*
     controller.addJavaScriptHandler(handlerName: 'availableApiResponse', callback: (args) async {
 
       // Log the response
@@ -855,8 +859,9 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
 
 
     });
+*/
 
-    controller.addJavaScriptHandler(handlerName: 'onBreakApiResponse', callback: (args) async {
+   /* controller.addJavaScriptHandler(handlerName: 'onBreakApiResponse', callback: (args) async {
 
       print('onBreakApiResponse ${args[0]}');
 
@@ -883,7 +888,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
       }
 
 
-    });
+    });*/
 
 
 
@@ -1077,7 +1082,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
   }
 
 
-  Future<String> uploadImage(File resizedImage, bool isProfileImg) async {
+
+  Future<String> uploadImage(File originalImage, bool isProfileImg) async {
     setState(() {
       _isLoading = true;
     });
@@ -1091,58 +1097,69 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
     print("urlTest $url");
 
     // Generate the current date and time in the desired format
-    String formattedDate = DateFormat('yyyy-MM-dd HHmmss').format(DateTime.now());
-    String noSpacesStr = formattedDate.replaceAll(' ', '_');
-    String name = 'properties_$noSpacesStr.png';
+    String formattedDate = DateFormat('yyyy-MM-dd_HHmmss').format(DateTime.now());
+    String name = 'properties_$formattedDate.jpg';
 
-    // Choose the correct form-data field name based on the API being called
-    String fileName = isProfileImg ? "file" : Config.fileTageName;
+    // Convert the image to JPG format
+    final imageBytes = File(originalImage.path).readAsBytesSync();
+    final decodedImage = img.decodeImage(imageBytes); // Decode the original image
+    if (decodedImage == null) {
+      showToast(message: "Failed to decode image.");
+      setState(() {
+        _isLoading = false;
+      });
+      return "";
+    }
+
+    // Save the image as JPG
+    final jpgImage = img.encodeJpg(decodedImage, quality: 90); // Adjust quality if needed
+    final jpgImageFile = File('${originalImage.parent.path}/$name');
+    await jpgImageFile.writeAsBytes(jpgImage);
 
     // Prepare the form data
+    String fileName = isProfileImg ? "file" : Config.fileTageName;
     FormData formData = FormData.fromMap({
-      '$fileName': await MultipartFile.fromFile(resizedImage.path, filename: name,contentType: DioMediaType('image', 'png'),),
+      fileName: await MultipartFile.fromFile(
+        jpgImageFile.path,
+        filename: name,
+        contentType: MediaType('image', 'jpeg'), // Ensure content type is image/jpeg
+      ),
     });
 
     try {
-      final response = await dio.post(url,
-          data: formData,
-          options: Options(
-            headers: {
-              'Authorization': 'Bearer $bearerToken', // Include the Bearer Token
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-              'Accept': 'application/json, text/plain, */*',
-              'Referer': 'https://sync.savemax.com/',
-              'platform': 'web',
-              'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
-              'sec-ch-ua-mobile': '?0',
-              'sec-ch-ua-platform': '"Windows"',
-              'Content-Type': 'multipart/form-data' // Ensure correct content type
-            },
-          ));
+      final response = await dio.post(
+        url,
+        data: formData,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $bearerToken',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Referer': 'https://sync.savemax.com/',
+            'platform': 'web',
+            'sec-ch-ua': '"Not/A)Brand";v="8", "Chromium";v="126", "Google Chrome";v="126"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
+      );
 
       var responseData = jsonEncode(response.data);
-
       print('responseCheck $responseData');
 
-      if(isProfileImg) {
-        setState(() {
-          _isLoading = false;
-        });
-        return response.statusCode.toString();
-      }else {
-        if (response.statusCode == 200) {
-          setState(() {
-            _isLoading = false;
-          });
-          return responseData;
-        } else {
-          showToast(message: "Image upload failed. Please try again.");
-          return "";
-        }
-      }
+      setState(() {
+        _isLoading = false;
+      });
 
+      if (response.statusCode == 200) {
+        return responseData;
+      } else {
+        showToast(message: "Image upload failed. Please try again.");
+        return "";
+      }
     } catch (e) {
-      print('exceptionCheck ${e}');
+      print('exceptionCheck $e');
       showToast(message: "Image upload failed. Please try again.");
       setState(() {
         _isLoading = false;
