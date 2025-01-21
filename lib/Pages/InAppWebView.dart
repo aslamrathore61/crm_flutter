@@ -43,7 +43,7 @@ final webViewTabStateKey = GlobalKey<_WebViewTabState>();
 
 class WebViewTab extends StatefulWidget {
 
-  final NativeItem nativeItem;
+  final NativeItem? nativeItem;
   late final UserInfo? userInfo;
 
   WebViewTab({required this.nativeItem, required this.userInfo});
@@ -180,9 +180,10 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
 
 
     _tabController = TabController(
-      length: widget.nativeItem.bottom!.length,
+      length: widget.nativeItem?.bottom?.length ?? 0, // Use default length if null
       vsync: this,
     );
+
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.blueAccent, // Change this to the desired color
@@ -327,8 +328,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
                 splashFactory: NoSplash.splashFactory,
                 onTap: (index) {
                   _onBottomTabTapped(
-                      widget.nativeItem.bottom![index].id ?? "",
-                      widget.nativeItem.bottom![index].uRL ?? "",
+                      widget.nativeItem?.bottom![index].id ?? "",
+                      widget.nativeItem?.bottom![index].uRL ?? "",
                       _webViewController!);
 
                   setState(() {
@@ -342,9 +343,11 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
                     });
                   });
                 },
-                tabs: widget.nativeItem.bottom!.map((item) {
-                  final svgBytes = base64Decode(item.icon!);
+                tabs: (widget.nativeItem?.bottom ?? []).map((item) {
+                  // Decode the icon if available, else use a default icon
+                  final svgBytes = item.icon != null ? base64Decode(item.icon!) : base64Decode("defaultIconBase64");
                   final svgString = utf8.decode(svgBytes);
+
                   print('titleName : ${item.title}');
 
                   return Tab(
@@ -353,13 +356,14 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
                       width: 24.0,
                       height: 24.0,
                       color: _tabController.index ==
-                          widget.nativeItem.bottom!.indexOf(item)
+                          (widget.nativeItem?.bottom?.indexOf(item) ?? -1)
                           ? Colors.lightBlue.shade900
                           : Colors.grey,
                     ),
-                    text: item.title,
+                    text: item.title ?? 'Default Title', // Fallback title if null
                   );
                 }).toList(),
+
               ),
             ),
           ),
@@ -407,7 +411,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
                           print("onSideMenuItemTap : $url");
                           int _index = 0;
                           int foundIndex = -1;
-                          widget.nativeItem.bottom?.forEach((element) {
+                          widget.nativeItem?.bottom?.forEach((element) {
                             if (element.id == id) {
                               foundIndex = _index;
                               return;
@@ -716,7 +720,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
       },
       onTitleChanged: (controller, title) async {
      // user this titlechanges when navigate page changes in webview
-     if(title != null) {
+    /* if(title != null) {
        for (int index = 0; index < widget.nativeItem.bottom!.length; index++) {
          var element = widget.nativeItem.bottom![index];
          if (element.naivgate!.contains(title)) {
@@ -725,7 +729,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
            });
          }
        }
-     }
+     }*/
 
 
      if(title != null && title.contains("Login") && tabBarVisibliy) {
@@ -793,6 +797,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
           final responseValue = await showOptions(context,true);
           List<dynamic> parsedResponse = jsonDecode(responseValue);
           String str = jsonEncode(parsedResponse[0]);
+          print("uploadResponse : $str");
           return str;
         }
       }else if (messageFromWeb == "ProfileImage") {
@@ -1153,6 +1158,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
       });
 
       if (response.statusCode == 200) {
+        print("responesgetsuccess");
         return responseData;
       } else {
         showToast(message: "Image upload failed. Please try again.");

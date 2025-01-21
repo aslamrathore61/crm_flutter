@@ -125,8 +125,11 @@ print('justOne 1');
       '/home': (context) {
         final Map<String, dynamic> args =
         ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
-        final UserInfo? userInfo = args['userInfo'];
-        final NativeItem nativeItem = args['nativeItem'];
+        // final UserInfo? userInfo = args['userInfo'];
+        // final NativeItem? nativeItem = args['nativeItem'];
+        const UserInfo? userInfo = null;
+        const NativeItem? nativeItem = null;
+
         return BlocProvider(
           create: (context) => GPSBloc()..add(CheckGPS()),
             child: WebViewTab(nativeItem: nativeItem, userInfo: userInfo));

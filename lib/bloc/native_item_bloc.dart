@@ -7,20 +7,35 @@ class NativeItemBloc extends Bloc<NativeItemEvent, NativeItemState> {
   final ApiProvider _apiRepository = ApiProvider();
 
   NativeItemBloc() : super(NativeItemInitial()) {
-    on<GetMenuDetailsEvents>((event, emit) async {
+   /* on<GetMenuDetailsEvents>((event, emit) async {
       try {
         final mList = await _apiRepository.fetchMenuDetails();
-        print('prinListaaa ${mList.toJson()}');
 
         if (mList != null) {
           emit(NativeItemLoaded(mList));
         } else {
-          print('erorEMIT error}');
           emit(NativeItemError('List Getting empty'));
         }
       } catch (error) {
         emit(NativeItemError(error.toString()));
       }
+    });*/
+
+
+    on<GetAppDeailsDetailsEvents>((event, emit) async {
+      try {
+        final mList = await _apiRepository.fetchAppConfig();
+
+        print("dtailsEvertn : ${mList}");
+        emit(AppConfigItemLoaded(mList));
+
+            } catch (error) {
+        print("dtailsEvertn : ${error}");
+
+        emit(AppConfigItemError(error.toString()));
+      }
     });
+
+
   }
 }

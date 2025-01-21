@@ -5,3 +5,5 @@ import 'package:flutter/cupertino.dart';
 abstract class NativeItemEvent {}
 
 class GetMenuDetailsEvents extends NativeItemEvent {}
+
+class GetAppDeailsDetailsEvents extends NativeItemEvent {}

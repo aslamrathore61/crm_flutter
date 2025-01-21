@@ -1,3 +1,4 @@
+import 'package:crm_flutter/model/AppConfig.dart';
 import 'package:flutter/cupertino.dart';
 
 import '../model/native_item.dart';
@@ -18,3 +19,20 @@ class NativeItemError extends NativeItemState {
 
   NativeItemError(this.message);
 }
+
+
+/// this call for first time state for check app version and menu verserion
+
+class AppConfigItemLoaded extends NativeItemState {
+  final AppConfig appConfig;
+
+  AppConfigItemLoaded(this.appConfig);
+}
+
+class AppConfigItemError extends NativeItemState {
+  final String message;
+
+  AppConfigItemError(this.message);
+}
+
+

@@ -15,6 +15,7 @@ class Config {
   static const String IMAGE_UPLOAD = "https://arise-uat.savemax.com/1.0/api/upload/file";
   static const String PROFILEiMG_UPLOAD = "https://arise-uat.savemax.com/1.0/api/agent/upload";
   static const String MENU_API  = "https://syncapp.savemax.com/api/other/menu-item/";
+  static const String APP_INFO_URL  = "https://arise-uat.savemax.com/api/app/info";
   static const String fileTageName = "files";
 
 
