@@ -91,24 +91,24 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
         String action = jsonEncode(message.data);
         print('action ${action}');
 
-        flutterLocalNotificationsPlugin!.show(
-            notification.hashCode,
-            notification.title,
-            notification.body,
-            NotificationDetails(
-              android: AndroidNotificationDetails(
-                channel!.id,
-                channel!.name,
-                priority: Priority.high,
-                importance: Importance.high,
-                styleInformation: DefaultStyleInformation(true, true),
-                largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
-                channelShowBadge: true,
-                autoCancel: true,
-                icon: '@mipmap/ic_launcher',
-              ),
-            ),
-            payload: action);
+        // flutterLocalNotificationsPlugin!.show(
+        //     notification.hashCode,
+        //     notification.title,
+        //     notification.body,
+        //     NotificationDetails(
+        //       android: AndroidNotificationDetails(
+        //         channel!.id,
+        //         channel!.name,
+        //         priority: Priority.high,
+        //         importance: Importance.high,
+        //         styleInformation: DefaultStyleInformation(true, true),
+        //         largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        //         channelShowBadge: true,
+        //         autoCancel: true,
+        //         icon: '@mipmap/ic_launcher',
+        //       ),
+        //     ),
+        //     payload: action);
       }
       print('A new event was published!');
     });
@@ -152,6 +152,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
       final String? url = payloadMap['url'];
       print('notificationPayLoadurl ${url}');
 
+
       handleDeepLink(url);
     }
   }
@@ -165,6 +166,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
       Uri uri = Uri.parse(redirectLink);
       String segmentPath = uri.path + '?' + uri.query;
       deepLinkingURL = Config.HOME_URL + segmentPath;
+      print("deepLinking : $deepLinkingURL");
     } else {
       deepLinkingURL = Config.HOME_URL;
     }
