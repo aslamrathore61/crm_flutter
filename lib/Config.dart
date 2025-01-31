@@ -1,6 +1,6 @@
 class Config {
 
-  // static const String HOME_URL = "http://172.17.10.39:3000/";
+  // static const String HOME_URL = "http://172.17.10.39:3000";
 
   // uat
 /*
@@ -19,7 +19,7 @@ class Config {
   // static const String fileTageName = "files";
 
   // new rise for prod
-  static const String HOME_URL = "https://rise.savemax.com/";
+  static const String HOME_URL = "https://rise.savemax.com";
   static const String IMAGE_UPLOAD = "https://rise.savemax.com/1.0/api/upload/file";
   static const String PROFILEiMG_UPLOAD = "https://rise.savemax.com/1.0/api/agent/upload";
   static const String APP_INFO_URL  = "https://rise.savemax.com/api/app/info";

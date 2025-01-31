@@ -24,6 +24,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../Component/buttons/socal_button.dart';
 import '../InAppWebViewUtil.dart';
+import '../Utils/CookieUtils.dart';
 import '../Utils/constants.dart';
 import '../bloc/gpsBloc/gps_bloc.dart';
 import '../bloc/gpsBloc/gps_state.dart';
@@ -231,6 +232,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
   @override
   void dispose() {
 
+    WidgetsBinding.instance.removeObserver(this);
     _webViewController?.dispose();
     _httpAuthUsernameController.dispose();
     _httpAuthPasswordController.dispose();
@@ -245,6 +247,8 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
     if (_webViewController != null && Util.isAndroid()) {
       if (state == AppLifecycleState.paused) {
         pauseAll();
+      }else if(state == AppLifecycleState.detached){
+
       } else {
         resumeAll();
       }
@@ -606,6 +610,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
     initialSettings.safeBrowsingEnabled = true;
     initialSettings.disableDefaultErrorPage = true;
     initialSettings.cacheEnabled = true; // Enable caching
+    initialSettings.sharedCookiesEnabled = true;
     initialSettings.verticalScrollbarThumbColor =
     const Color.fromRGBO(0, 0, 0, 0.5);
     initialSettings.horizontalScrollbarThumbColor =
@@ -622,7 +627,7 @@ class _WebViewTabState extends State<WebViewTab> with WidgetsBindingObserver, Ti
         await controller.setSettings(settings: initialSettings);
         _webViewController = controller;
         _webViewController?.setSettings(
-            settings:InAppWebViewSettings(builtInZoomControls:false,javaScriptEnabled: true,useHybridComposition: true)
+            settings:InAppWebViewSettings(builtInZoomControls:false,javaScriptEnabled: true,useHybridComposition: true,sharedCookiesEnabled: true)
         );
 
         addJavaScriptHandlers(controller, context);

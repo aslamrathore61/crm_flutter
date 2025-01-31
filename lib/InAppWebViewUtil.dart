@@ -43,13 +43,18 @@ class Util {
     String jsCode = "";
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? fcmToken = prefs.getString('fcmToken');
+    print("fcmToken : "+fcmToken.toString());
 
     if(androidInfo != null) {
       print("androidDeviceInfo : ${androidInfo.manufacturer}, ${androidInfo.model} ,${androidInfo.version.release}");
       jsCode = '{"DeviceInfo": "${androidInfo.manufacturer} ${androidInfo.model} ${androidInfo.version.release} ", "AppVersion": "${packageInfo.buildNumber}", "FirebaseFCM": "$fcmToken"}';
     }else if(iosInfo != null) {
+      print("getnotifyfromweb 2");
       print("IOSDeviceInfo : ${iosInfo.systemName}, ${iosInfo.model} ,${iosInfo.systemVersion} ");
       jsCode = '{"DeviceInfo": "${iosInfo.systemName} ${iosInfo.model} ${iosInfo.systemVersion} ", "AppVersion": "${packageInfo.buildNumber}", "FirebaseFCM": "$fcmToken"}';
+    }else {
+      print("getnotifyfromweb 3");
+
     }
 
     return jsCode;

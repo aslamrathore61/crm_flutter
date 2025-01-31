@@ -56,8 +56,11 @@ Future<void> main() async {
   ]);
 
   await Firebase.initializeApp(
+    name: "dev_project",
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+    // await Future.delayed(Duration(seconds: 1));
 
   FirebaseMessaging messaging = FirebaseMessaging.instance;
 
@@ -84,7 +87,6 @@ Future<void> main() async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
   print('fcmToakenValue ${fcmToken}');
   await prefs.setString('fcmToken', '$fcmToken');
-
   channel = const AndroidNotificationChannel(
       'flutter_notification', // id
       'flutter_notification_title', // title
@@ -99,9 +101,9 @@ Future<void> main() async {
 
   await messaging
       .setForegroundNotificationPresentationOptions(
-    alert: true,
-    badge: true,
-    sound: true,
+    alert: false,
+    badge: false,
+    sound: false,
   );
 
   await initializeHive();

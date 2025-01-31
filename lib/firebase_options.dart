@@ -59,10 +59,10 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDoRBaxB7LYsX3MevX-KUKukVmNzODSzp0',
-    appId: '1:393281013850:ios:36fd0a68e6f92a0f8ef063',
+    appId: '1:393281013850:ios:e70876375b8cdc8f8ef063',
     messagingSenderId: '393281013850',
     projectId: 'save-max-crm',
     storageBucket: 'save-max-crm.appspot.com',
-    iosBundleId: 'com.savemax.crm',
+    iosBundleId: 'com.savemax.arisecrm',
   );
 }
